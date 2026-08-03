@@ -13,21 +13,21 @@ class _ListadoScreenState extends State<ListadoScreen> {
   final List<Orden> _ordenes = [
     Orden(
       numeroOrden: 1,
-      cliente: 'Sol España',
-      productos: ['2 baleadas con huevo ', 'Agua embotellada'],
+      cliente: 'Carlos Lopez',
+      productos: ['Gasolina 5 galones', 'Agua embotellada'],
       total: 285.50,
     ),
     Orden(
       numeroOrden: 2,
-      cliente: 'Fernando Arvizu',
-      productos: ['Arroz con pollo', 'Cafe'],
+      cliente: 'Maria Garcia',
+      productos: ['Diesel 10 galones', 'Cafe'],
       total: 620.00,
       estado: 'En preparacion',
     ),
     Orden(
       numeroOrden: 3,
-      cliente: 'Ismael Castillo',
-      productos: ['Pastelitos de pollo'],
+      cliente: 'Juan Perez',
+      productos: ['Gasolina 3 galones'],
       total: 171.30,
       estado: 'Lista',
     ),
@@ -56,8 +56,20 @@ class _ListadoScreenState extends State<ListadoScreen> {
     });
   }
 
+  List<Orden> get _ordenesOrdenadas {
+    final prioridad = {'Pendiente': 0, 'En preparacion': 1, 'Lista': 2};
+
+    final copia = List<Orden>.from(_ordenes);
+    copia.sort((a, b) {
+      return (prioridad[a.estado] ?? 3).compareTo(prioridad[b.estado] ?? 3);
+    });
+    return copia;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final ordenesParaMostrar = _ordenesOrdenadas;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF2F2F2),
       appBar: AppBar(
@@ -67,9 +79,9 @@ class _ListadoScreenState extends State<ListadoScreen> {
       ),
       body: ListView.builder(
         padding: const EdgeInsets.all(12),
-        itemCount: _ordenes.length,
+        itemCount: ordenesParaMostrar.length,
         itemBuilder: (context, index) {
-          final orden = _ordenes[index];
+          final orden = ordenesParaMostrar[index];
 
           return Card(
             color: _colorPorEstado(orden.estado),
