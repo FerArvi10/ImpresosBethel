@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import '../data/productos_data.dart';
 import '../models/orden.dart';
+import '../widgets/producto_detalle_modal.dart';
 
 class DetalleOrdenScreen extends StatelessWidget {
   final Orden orden;
@@ -28,7 +30,7 @@ class DetalleOrdenScreen extends StatelessWidget {
         title: Text('Orden #${orden.numeroOrden}'),
         centerTitle: true,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -59,28 +61,63 @@ class DetalleOrdenScreen extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
-            const Text(
-              'Productos',
-              style: TextStyle(fontSize: 14, color: Colors.grey),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: const [
+                Text(
+                  'Productos',
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+                Text(
+                  'Toca un producto para ver detalle',
+                  style: TextStyle(fontSize: 12, color: Colors.orange, fontStyle: FontStyle.italic),
+                ),
+              ],
             ),
             const SizedBox(height: 8),
 
-            // Muestra cada producto de la lista
+            // Muestra cada producto de la lista interactivo
             ...orden.productos.map(
-              (producto) => Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.local_gas_station,
-                      size: 18,
+              (nombreProducto) {
+                final productoInfo = ProductosData.obtenerPorNombre(nombreProducto);
+                final icono = productoInfo?.icono ?? Icons.fastfood_outlined;
+
+                return Card(
+                  elevation: 1,
+                  margin: const EdgeInsets.only(bottom: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: ListTile(
+                    leading: Icon(
+                      icono,
                       color: Colors.orange,
                     ),
-                    const SizedBox(width: 8),
-                    Text(producto, style: const TextStyle(fontSize: 16)),
-                  ],
-                ),
-              ),
+                    title: Text(
+                      nombreProducto.trim(),
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                    ),
+                    subtitle: productoInfo != null
+                        ? Text(
+                            '${productoInfo.categoria} • ${productoInfo.tiempoPreparacion}',
+                            style: const TextStyle(fontSize: 12),
+                          )
+                        : null,
+                    trailing: const Icon(Icons.info_outline, size: 20, color: Colors.orange),
+                    onTap: () {
+                      if (productoInfo != null) {
+                        ProductoDetalleModal.mostrar(context, productoInfo);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Detalle de "$nombreProducto" no encontrado en el catálogo.'),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                );
+              },
             ),
 
             const Divider(height: 40),

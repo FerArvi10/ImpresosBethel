@@ -13,21 +13,21 @@ class _ListadoScreenState extends State<ListadoScreen> {
   final List<Orden> _ordenes = [
     Orden(
       numeroOrden: 1,
-      cliente: 'Carlos Lopez',
-      productos: ['Gasolina 5 galones', 'Agua embotellada'],
+      cliente: 'Sol España',
+      productos: [' 2 Baleadas con huevo', 'Agua embotellada'],
       total: 285.50,
     ),
     Orden(
       numeroOrden: 2,
-      cliente: 'Maria Garcia',
-      productos: ['Diesel 10 galones', 'Cafe'],
+      cliente: 'Fernando Arvizu',
+      productos: ['Arroz con pollo', 'Cafe'],
       total: 620.00,
       estado: 'En preparacion',
     ),
     Orden(
       numeroOrden: 3,
-      cliente: 'Juan Perez',
-      productos: ['Gasolina 3 galones'],
+      cliente: 'Ismael Castillo',
+      productos: ['Pastelitos de pollo', 'Coca Cola Personal'],
       total: 171.30,
       estado: 'Lista',
     ),

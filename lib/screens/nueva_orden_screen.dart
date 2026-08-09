@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../data/productos_data.dart';
+import '../widgets/producto_detalle_modal.dart';
 
 class NuevaOrdenScreen extends StatefulWidget {
   const NuevaOrdenScreen({super.key});
@@ -8,43 +10,36 @@ class NuevaOrdenScreen extends StatefulWidget {
 }
 
 class _NuevaOrdenScreenState extends State<NuevaOrdenScreen> {
-  final Map<String, double> _productosDisponibles = {
-    'Baleada con huevo': 20.10,
-    'Arroz con pollo': 50.00,
-    'Agua embotellada': 20.00,
-    'Cafe': 35.00,
-    'Snack': 25.00,
-    'Pastelitos de pollo': 10.00,
-    'Pollo chuco': 100.00,
-    'Coca Cola Personal': 25.00,
-  };
-
   final Map<String, bool> _seleccionados = {};
-
   final TextEditingController _clienteController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-
-    for (var producto in _productosDisponibles.keys) {
-      _seleccionados[producto] = false;
+    for (var producto in ProductosData.listaProductos) {
+      _seleccionados[producto.id] = false;
     }
   }
 
-  void _toggleProducto(String producto, bool? valor) {
+  @override
+  void dispose() {
+    _clienteController.dispose();
+    super.dispose();
+  }
+
+  void _toggleProducto(String productoId, bool? valor) {
     setState(() {
-      _seleccionados[producto] = valor ?? false;
+      _seleccionados[productoId] = valor ?? false;
     });
   }
 
   double _calcularTotal() {
     double total = 0;
-    _seleccionados.forEach((producto, seleccionado) {
-      if (seleccionado) {
-        total += _productosDisponibles[producto]!;
+    for (var producto in ProductosData.listaProductos) {
+      if (_seleccionados[producto.id] == true) {
+        total += producto.precio;
       }
-    });
+    }
     return total;
   }
 
@@ -67,6 +62,7 @@ class _NuevaOrdenScreenState extends State<NuevaOrdenScreen> {
                 labelText: 'Nombre del cliente',
                 filled: true,
                 fillColor: Colors.white,
+                prefixIcon: const Icon(Icons.person_outline, color: Colors.orange),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -75,28 +71,63 @@ class _NuevaOrdenScreenState extends State<NuevaOrdenScreen> {
           ),
 
           const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                'Selecciona los productos',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                'Selecciona los productos (toca (i) para ver detalles)',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
               ),
             ),
           ),
 
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              children: _productosDisponibles.keys.map((producto) {
-                final precio = _productosDisponibles[producto]!;
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              children: ProductosData.listaProductos.map((producto) {
+                final esSeleccionado = _seleccionados[producto.id] ?? false;
                 return Card(
-                  child: CheckboxListTile(
-                    activeColor: Colors.orange,
-                    title: Text(producto),
-                    subtitle: Text('L. ${precio.toStringAsFixed(2)}'),
-                    value: _seleccionados[producto],
-                    onChanged: (valor) => _toggleProducto(producto, valor),
+                  elevation: 1,
+                  margin: const EdgeInsets.only(bottom: 8),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: Colors.orange.shade50,
+                      child: Icon(producto.icono, color: Colors.orange),
+                    ),
+                    title: Text(
+                      producto.nombre,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(
+                      'L. ${producto.precio.toStringAsFixed(2)} • ${producto.categoria}',
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.info_outline, color: Colors.orange),
+                          tooltip: 'Ver detalle de ${producto.nombre}',
+                          onPressed: () {
+                            ProductoDetalleModal.mostrar(
+                              context,
+                              producto,
+                              onAgregar: () {
+                                _toggleProducto(producto.id, true);
+                              },
+                            );
+                          },
+                        ),
+                        Checkbox(
+                          activeColor: Colors.orange,
+                          value: esSeleccionado,
+                          onChanged: (valor) =>
+                              _toggleProducto(producto.id, valor),
+                        ),
+                      ],
+                    ),
+                    onTap: () {
+                      _toggleProducto(producto.id, !esSeleccionado);
+                    },
                   ),
                 );
               }).toList(),
@@ -141,6 +172,15 @@ class _NuevaOrdenScreenState extends State<NuevaOrdenScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
                     onPressed: () {
+                      final cliente = _clienteController.text.trim();
+                      if (cliente.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Por favor ingresa el nombre del cliente'),
+                          ),
+                        );
+                        return;
+                      }
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Orden enviada a cocina')),
                       );
