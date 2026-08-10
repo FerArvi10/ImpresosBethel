@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../data/productos_data.dart';
+import '../widgets/producto_card.dart';
 import '../widgets/producto_detalle_modal.dart';
 
 class NuevaOrdenScreen extends StatefulWidget {
@@ -27,9 +28,9 @@ class _NuevaOrdenScreenState extends State<NuevaOrdenScreen> {
     super.dispose();
   }
 
-  void _toggleProducto(String productoId, bool? valor) {
+  void _toggleProducto(String productoId, bool valor) {
     setState(() {
-      _seleccionados[productoId] = valor ?? false;
+      _seleccionados[productoId] = valor;
     });
   }
 
@@ -43,13 +44,62 @@ class _NuevaOrdenScreenState extends State<NuevaOrdenScreen> {
     return total;
   }
 
+  int get _cantidadProductosSeleccionados {
+    return _seleccionados.values.where((v) => v).length;
+  }
+
+  void _enviarOrden() {
+    final cliente = _clienteController.text.trim();
+    if (cliente.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Por favor ingresa el nombre del cliente'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (_cantidadProductosSeleccionados == 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Por favor selecciona al menos un producto'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Orden para "$cliente" enviada a cocina'),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 4),
+        action: SnackBarAction(
+          label: 'DESHACER',
+          onPressed: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Envío de orden cancelado'),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          },
+        ),
+      ),
+    );
+    Navigator.pop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF2F2F2),
       appBar: AppBar(
         backgroundColor: Colors.orange,
-        title: const Text('Nueva orden'),
+        title: const Text('Nueva Orden'),
         centerTitle: true,
       ),
       body: Column(
@@ -62,78 +112,60 @@ class _NuevaOrdenScreenState extends State<NuevaOrdenScreen> {
                 labelText: 'Nombre del cliente',
                 filled: true,
                 fillColor: Colors.white,
-                prefixIcon: const Icon(Icons.person_outline, color: Colors.orange),
+                prefixIcon:
+                    const Icon(Icons.person_outline, color: Colors.orange),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
             ),
           ),
-
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Selecciona los productos (toca (i) para ver detalles)',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-              ),
-            ),
-          ),
-
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              children: ProductosData.listaProductos.map((producto) {
-                final esSeleccionado = _seleccionados[producto.id] ?? false;
-                return Card(
-                  elevation: 1,
-                  margin: const EdgeInsets.only(bottom: 8),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: Colors.orange.shade50,
-                      child: Icon(producto.icono, color: Colors.orange),
-                    ),
-                    title: Text(
-                      producto.nombre,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Text(
-                      'L. ${producto.precio.toStringAsFixed(2)} • ${producto.categoria}',
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.info_outline, color: Colors.orange),
-                          tooltip: 'Ver detalle de ${producto.nombre}',
-                          onPressed: () {
-                            ProductoDetalleModal.mostrar(
-                              context,
-                              producto,
-                              onAgregar: () {
-                                _toggleProducto(producto.id, true);
-                              },
-                            );
-                          },
-                        ),
-                        Checkbox(
-                          activeColor: Colors.orange,
-                          value: esSeleccionado,
-                          onChanged: (valor) =>
-                              _toggleProducto(producto.id, valor),
-                        ),
-                      ],
-                    ),
-                    onTap: () {
-                      _toggleProducto(producto.id, !esSeleccionado);
-                    },
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Selecciona los productos',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+                Text(
+                  'Seleccionados: $_cantidadProductosSeleccionados',
+                  style: const TextStyle(
+                    color: Colors.orange,
+                    fontWeight: FontWeight.bold,
                   ),
-                );
-              }).toList(),
+                ),
+              ],
             ),
           ),
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              itemCount: ProductosData.listaProductos.length,
+              itemBuilder: (context, index) {
+                final producto = ProductosData.listaProductos[index];
+                final esSeleccionado = _seleccionados[producto.id] ?? false;
 
+                return ProductoCard(
+                  producto: producto,
+                  isSeleccionado: esSeleccionado,
+                  onTap: () {
+                    ProductoDetalleModal.mostrar(
+                      context,
+                      producto,
+                      onAgregar: () {
+                        _toggleProducto(producto.id, !esSeleccionado);
+                      },
+                    );
+                  },
+                  onAgregar: () {
+                    _toggleProducto(producto.id, !esSeleccionado);
+                  },
+                );
+              },
+            ),
+          ),
           Container(
             padding: const EdgeInsets.all(16),
             decoration: const BoxDecoration(
@@ -165,28 +197,22 @@ class _NuevaOrdenScreenState extends State<NuevaOrdenScreen> {
                 const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
-                  child: ElevatedButton(
+                  child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.orange,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
-                    onPressed: () {
-                      final cliente = _clienteController.text.trim();
-                      if (cliente.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Por favor ingresa el nombre del cliente'),
-                          ),
-                        );
-                        return;
-                      }
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Orden enviada a cocina')),
-                      );
-                      Navigator.pop(context);
-                    },
-                    child: const Text('Enviar orden a cocina'),
+                    onPressed: _enviarOrden,
+                    icon: const Icon(Icons.send),
+                    label: const Text(
+                      'Enviar orden a cocina',
+                      style: TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
               ],

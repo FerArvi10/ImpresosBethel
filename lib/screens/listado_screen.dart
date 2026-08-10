@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import '../models/orden.dart';
+import '../widgets/orden_card.dart';
 import 'detalle_orden_screen.dart';
+import 'nueva_orden_screen.dart';
 
+// StatefulWidget porque la lista de ordenes cambia
+// (estados, favoritos y eliminaciones se actualizan en tiempo real)
 class ListadoScreen extends StatefulWidget {
   const ListadoScreen({super.key});
 
@@ -9,43 +13,65 @@ class ListadoScreen extends StatefulWidget {
   State<ListadoScreen> createState() => _ListadoScreenState();
 }
 
-class _ListadoScreenState extends State<ListadoScreen> {
+// SingleTickerProviderStateMixin es necesario para que el TabController
+// funcione con animacion (cambio de pestaña)
+class _ListadoScreenState extends State<ListadoScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  // Lista de ordenes de ejemplo
   final List<Orden> _ordenes = [
     Orden(
       numeroOrden: 1,
-      cliente: 'Sol España',
-      productos: [' 2 Baleadas con huevo', 'Agua embotellada'],
-      total: 285.50,
+      cliente: 'Carlos Lopez',
+      productos: ['Baleada con huevo', 'Agua embotellada'],
+      total: 40.10,
     ),
     Orden(
       numeroOrden: 2,
-      cliente: 'Fernando Arvizu',
+      cliente: 'Maria Garcia',
       productos: ['Arroz con pollo', 'Cafe'],
-      total: 620.00,
+      total: 85.00,
       estado: 'En preparacion',
     ),
     Orden(
       numeroOrden: 3,
-      cliente: 'Ismael Castillo',
-      productos: ['Pastelitos de pollo', 'Coca Cola Personal'],
-      total: 171.30,
+      cliente: 'Juan Perez',
+      productos: ['Pastelitos de pollo'],
+      total: 10.00,
       estado: 'Lista',
     ),
   ];
 
-  Color _colorPorEstado(String estado) {
-    switch (estado) {
-      case 'Pendiente':
-        return Colors.red.shade100;
-      case 'En preparacion':
-        return Colors.yellow.shade100;
-      case 'Lista':
-        return Colors.green.shade100;
-      default:
-        return Colors.grey.shade100;
-    }
+  // Guarda que ordenes fueron marcadas como urgentes (IconButton)
+  final Set<int> _urgentes = {};
+
+  @override
+  void initState() {
+    super.initState();
+    // 2 pestañas: Activas y Completadas
+    _tabController = TabController(length: 2, vsync: this);
   }
 
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  // ─────────────────────────
+  // Filtra las ordenes segun la pestaña
+  // ─────────────────────────
+  List<Orden> get _ordenesActivas =>
+      _ordenes.where((o) => o.estado != 'Lista').toList()
+        ..sort((a, b) => a.estado == 'Pendiente' ? -1 : 1);
+
+  List<Orden> get _ordenesCompletadas =>
+      _ordenes.where((o) => o.estado == 'Lista').toList();
+
+  // ─────────────────────────
+  // Avanza el estado de una orden (boton dentro de OrdenCard)
+  // ─────────────────────────
   void _avanzarEstado(Orden orden) {
     setState(() {
       if (orden.estado == 'Pendiente') {
@@ -56,56 +82,64 @@ class _ListadoScreenState extends State<ListadoScreen> {
     });
   }
 
-  List<Orden> get _ordenesOrdenadas {
-    final prioridad = {'Pendiente': 0, 'En preparacion': 1, 'Lista': 2};
-
-    final copia = List<Orden>.from(_ordenes);
-    copia.sort((a, b) {
-      return (prioridad[a.estado] ?? 3).compareTo(prioridad[b.estado] ?? 3);
+  // ─────────────────────────
+  // IconButton: marca/desmarca una orden como urgente
+  // ─────────────────────────
+  void _toggleUrgente(int numeroOrden) {
+    setState(() {
+      if (_urgentes.contains(numeroOrden)) {
+        _urgentes.remove(numeroOrden);
+      } else {
+        _urgentes.add(numeroOrden);
+      }
     });
-    return copia;
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final ordenesParaMostrar = _ordenesOrdenadas;
+  void _eliminarOrden(Orden orden) {
+    final index = _ordenes.indexOf(orden);
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF2F2F2),
-      appBar: AppBar(
-        backgroundColor: Colors.orange,
-        title: const Text('Ordenes activas'),
-        centerTitle: true,
+    setState(() {
+      _ordenes.remove(orden);
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Orden #${orden.numeroOrden} eliminada'),
+        behavior: SnackBarBehavior.floating,
+        action: SnackBarAction(
+          label: 'DESHACER',
+          onPressed: () {
+            setState(() {
+              _ordenes.insert(index, orden);
+            });
+          },
+        ),
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(12),
-        itemCount: ordenesParaMostrar.length,
-        itemBuilder: (context, index) {
-          final orden = ordenesParaMostrar[index];
+    );
+  }
 
-          return Card(
-            color: _colorPorEstado(orden.estado),
-            margin: const EdgeInsets.only(bottom: 12),
-            child: ListTile(
-              contentPadding: const EdgeInsets.all(12),
-              title: Text(
-                'Orden #${orden.numeroOrden} - ${orden.cliente}',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              subtitle: Text(
-                'Estado: ${orden.estado}\nTotal: L. ${orden.total.toStringAsFixed(2)}',
-              ),
-              isThreeLine: true,
-              trailing: orden.estado != 'Lista'
-                  ? ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.orange,
-                        foregroundColor: Colors.white,
-                      ),
-                      onPressed: () => _avanzarEstado(orden),
-                      child: const Text('Avanzar'),
-                    )
-                  : const Icon(Icons.check_circle, color: Colors.green),
+  // Construye la lista de tarjetas para una pestaña
+  Widget _construirLista(List<Orden> lista, {bool permiteEliminar = true}) {
+    if (lista.isEmpty) {
+      return const Center(
+        child: Text(
+          'No hay ordenes en esta seccion',
+          style: TextStyle(color: Colors.grey),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(12),
+      itemCount: lista.length,
+      itemBuilder: (context, index) {
+        final orden = lista[index];
+        final esUrgente = _urgentes.contains(orden.numeroOrden);
+
+        final tarjeta = Stack(
+          children: [
+            OrdenCard(
+              orden: orden,
               onTap: () {
                 Navigator.push(
                   context,
@@ -114,9 +148,81 @@ class _ListadoScreenState extends State<ListadoScreen> {
                   ),
                 );
               },
+              onAvanzar: () => _avanzarEstado(orden),
             ),
+            // IconButton de urgente, sobrepuesto arriba a la derecha de la tarjeta
+            Positioned(
+              top: 4,
+              right: 4,
+              child: IconButton(
+                icon: Icon(
+                  esUrgente ? Icons.priority_high : Icons.notifications_none,
+                  color: esUrgente ? Colors.red : Colors.grey,
+                ),
+                tooltip: 'Marcar como urgente',
+                onPressed: () => _toggleUrgente(orden.numeroOrden),
+              ),
+            ),
+          ],
+        );
+
+        if (!permiteEliminar) return tarjeta;
+
+        return Dismissible(
+          key: ValueKey(orden.numeroOrden),
+          direction: DismissDirection.endToStart,
+          background: Container(
+            alignment: Alignment.centerRight,
+            padding: const EdgeInsets.only(right: 20),
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              color: Colors.red,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.delete, color: Colors.white),
+          ),
+          onDismissed: (direction) => _eliminarOrden(orden),
+          child: tarjeta,
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF2F2F2),
+      appBar: AppBar(
+        backgroundColor: Colors.orange,
+        title: const Text('Ordenes'),
+        centerTitle: true,
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorColor: Colors.white,
+          tabs: [
+            Tab(text: 'Activas (${_ordenesActivas.length})'),
+            Tab(text: 'Completadas (${_ordenesCompletadas.length})'),
+          ],
+        ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          _construirLista(_ordenesActivas, permiteEliminar: true),
+          _construirLista(_ordenesCompletadas, permiteEliminar: false),
+        ],
+      ),
+      // FloatingActionButton: acceso directo a crear una orden nueva
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.orange,
+        tooltip: 'Nueva orden',
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const NuevaOrdenScreen()),
           );
         },
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }

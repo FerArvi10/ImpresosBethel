@@ -71,7 +71,7 @@ class HomeScreen extends StatelessWidget {
                 );
               },
             ),
-            // La opcion de crear orden solo la ve la cajera
+
             if (esCajera)
               ListTile(
                 leading: const Icon(Icons.add_circle_outline),
@@ -185,31 +185,31 @@ class HomeScreen extends StatelessWidget {
                   label: const Text('Catálogo de productos'),
                 ),
               ),
-              const SizedBox(height: 16),
-
-              // Boton para crear una orden nueva (solo para la cajera)
-              if (esCajera)
-                SizedBox(
-                  width: 250,
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.orange,
-                      side: const BorderSide(color: Colors.orange),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const NuevaOrdenScreen(),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.add),
-                    label: const Text('Nueva orden'),
-                  ),
-                ),
             ],
+          ),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: Colors.orange,
+        onPressed: () {
+          if (esCajera) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const NuevaOrdenScreen()),
+            );
+          } else {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ListadoScreen()),
+            );
+          }
+        },
+        icon: Icon(esCajera ? Icons.add : Icons.list_alt, color: Colors.white),
+        label: Text(
+          esCajera ? 'Nueva Orden' : 'Ver Órdenes',
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
           ),
         ),
       ),
