@@ -8,7 +8,6 @@ class AcercaDeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF2F2F2),
       appBar: AppBar(
-        backgroundColor: Colors.orange,
         title: const Text('Acerca de'),
         centerTitle: true,
       ),
@@ -17,28 +16,33 @@ class AcercaDeScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.local_gas_station, size: 60, color: Colors.orange),
+            const Icon(Icons.print, size: 60, color: Colors.teal),
             const SizedBox(height: 16),
             const Text(
-              'OrderTracker',
+              'Impresos Bethel',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 4),
             const Text(
-              'App para agilizar el manejo de órdenes de comida en '
-              'Texaco Satuye, conectando a la cajera con la cocina en '
-              'tiempo real.',
+              'Crecemos gracias a su preferencia. '
+              'Ofrecemos servicios de impresión, bordado, estampado '
+              'y artículos de librería.',
             ),
             const SizedBox(height: 24),
             const Text(
-              'Equipo (Grupo 7)',
+              'Equipo de Desarrollo',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             const ListTile(
               contentPadding: EdgeInsets.zero,
               leading: Icon(Icons.person_outline),
-              title: Text('Sol España'),
+              title: Text('Yerson Alvarenga'),
+            ),
+            const ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(Icons.person_outline),
+              title: Text('Gabriel Escalante'),
             ),
             const ListTile(
               contentPadding: EdgeInsets.zero,

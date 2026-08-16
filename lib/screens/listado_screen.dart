@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import '../models/orden.dart';
-import '../widgets/orden_card.dart';
-import 'detalle_orden_screen.dart';
-import 'nueva_orden_screen.dart';
+import '../models/producto.dart';
+import '../widgets/product_card.dart';
+import '../widgets/mi_status_widget.dart';
+import 'detalle_screen.dart';
 
-// StatefulWidget porque la lista de ordenes cambia
-// (estados, favoritos y eliminaciones se actualizan en tiempo real)
 class ListadoScreen extends StatefulWidget {
   const ListadoScreen({super.key});
 
@@ -13,104 +11,76 @@ class ListadoScreen extends StatefulWidget {
   State<ListadoScreen> createState() => _ListadoScreenState();
 }
 
-// SingleTickerProviderStateMixin es necesario para que el TabController
-// funcione con animacion (cambio de pestaña)
-class _ListadoScreenState extends State<ListadoScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _ListadoScreenState extends State<ListadoScreen> {
+  final List<Producto> _productos = List.from(catalogoDemo);
+  final Set<int> _favoritos = {};
 
-  // Lista de ordenes de ejemplo
-  final List<Orden> _ordenes = [
-    Orden(
-      numeroOrden: 1,
-      cliente: 'Carlos Lopez',
-      productos: ['Baleada con huevo', 'Agua embotellada'],
-      total: 40.10,
-    ),
-    Orden(
-      numeroOrden: 2,
-      cliente: 'Maria Garcia',
-      productos: ['Arroz con pollo', 'Cafe'],
-      total: 85.00,
-      estado: 'En preparacion',
-    ),
-    Orden(
-      numeroOrden: 3,
-      cliente: 'Juan Perez',
-      productos: ['Pastelitos de pollo'],
-      total: 10.00,
-      estado: 'Lista',
-    ),
-  ];
-
-  // Guarda que ordenes fueron marcadas como urgentes (IconButton)
-  final Set<int> _urgentes = {};
-
-  @override
-  void initState() {
-    super.initState();
-    // 2 pestañas: Activas y Completadas
-    _tabController = TabController(length: 2, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  // ─────────────────────────
-  // Filtra las ordenes segun la pestaña
-  // ─────────────────────────
-  List<Orden> get _ordenesActivas =>
-      _ordenes.where((o) => o.estado != 'Lista').toList()
-        ..sort((a, b) => a.estado == 'Pendiente' ? -1 : 1);
-
-  List<Orden> get _ordenesCompletadas =>
-      _ordenes.where((o) => o.estado == 'Lista').toList();
-
-  // ─────────────────────────
-  // Avanza el estado de una orden (boton dentro de OrdenCard)
-  // ─────────────────────────
-  void _avanzarEstado(Orden orden) {
+  void _toggleFavorito(int id) {
     setState(() {
-      if (orden.estado == 'Pendiente') {
-        orden.marcarEnPreparacion();
-      } else if (orden.estado == 'En preparacion') {
-        orden.marcarComoLista();
-      }
-    });
-  }
-
-  // ─────────────────────────
-  // IconButton: marca/desmarca una orden como urgente
-  // ─────────────────────────
-  void _toggleUrgente(int numeroOrden) {
-    setState(() {
-      if (_urgentes.contains(numeroOrden)) {
-        _urgentes.remove(numeroOrden);
+      if (_favoritos.contains(id)) {
+        _favoritos.remove(id);
       } else {
-        _urgentes.add(numeroOrden);
+        _favoritos.add(id);
       }
     });
   }
 
-  void _eliminarOrden(Orden orden) {
-    final index = _ordenes.indexOf(orden);
+  void _confirmarEliminacion(Producto producto) {
+    showDialog(
+      context: context,
+      builder: (dialogCtx) {
+        return AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Colors.red),
+              SizedBox(width: 8),
+              Expanded(child: Text('¿Desea eliminar este item?')),
+            ],
+          ),
+          content: Text('Se eliminará "${producto.nombre}" del catálogo.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogCtx),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () {
+                Navigator.pop(dialogCtx);
+                _eliminarProducto(producto);
+              },
+              child: const Text('Eliminar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
+  void _eliminarProducto(Producto producto) {
+    final index = _productos.indexOf(producto);
     setState(() {
-      _ordenes.remove(orden);
+      _productos.remove(producto);
+      _favoritos.remove(producto.id);
     });
 
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Orden #${orden.numeroOrden} eliminada'),
+        content: Text('"${producto.nombre}" eliminado del catálogo'),
+        duration: const Duration(seconds: 5),
         behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         action: SnackBarAction(
           label: 'DESHACER',
+          textColor: Colors.amber,
           onPressed: () {
             setState(() {
-              _ordenes.insert(index, orden);
+              _productos.insert(index, producto);
             });
           },
         ),
@@ -118,112 +88,160 @@ class _ListadoScreenState extends State<ListadoScreen>
     );
   }
 
-  // Construye la lista de tarjetas para una pestaña
-  Widget _construirLista(List<Orden> lista, {bool permiteEliminar = true}) {
-    if (lista.isEmpty) {
-      return const Center(
-        child: Text(
-          'No hay ordenes en esta seccion',
-          style: TextStyle(color: Colors.grey),
-        ),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(12),
-      itemCount: lista.length,
-      itemBuilder: (context, index) {
-        final orden = lista[index];
-        final esUrgente = _urgentes.contains(orden.numeroOrden);
-
-        final tarjeta = Stack(
-          children: [
-            OrdenCard(
-              orden: orden,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => DetalleOrdenScreen(orden: orden),
-                  ),
-                );
-              },
-              onAvanzar: () => _avanzarEstado(orden),
-            ),
-            // IconButton de urgente, sobrepuesto arriba a la derecha de la tarjeta
-            Positioned(
-              top: 4,
-              right: 4,
-              child: IconButton(
-                icon: Icon(
-                  esUrgente ? Icons.priority_high : Icons.notifications_none,
-                  color: esUrgente ? Colors.red : Colors.grey,
-                ),
-                tooltip: 'Marcar como urgente',
-                onPressed: () => _toggleUrgente(orden.numeroOrden),
+  void _editarProducto(Producto producto) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Editando "${producto.nombre}"'),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        action: SnackBarAction(
+          label: 'VER',
+          textColor: Colors.tealAccent,
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => DetalleScreen(producto: producto),
               ),
-            ),
-          ],
-        );
-
-        if (!permiteEliminar) return tarjeta;
-
-        return Dismissible(
-          key: ValueKey(orden.numeroOrden),
-          direction: DismissDirection.endToStart,
-          background: Container(
-            alignment: Alignment.centerRight,
-            padding: const EdgeInsets.only(right: 20),
-            margin: const EdgeInsets.only(bottom: 12),
-            decoration: BoxDecoration(
-              color: Colors.red,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(Icons.delete, color: Colors.white),
-          ),
-          onDismissed: (direction) => _eliminarOrden(orden),
-          child: tarjeta,
-        );
-      },
+            );
+          },
+        ),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF2F2F2),
-      appBar: AppBar(
-        backgroundColor: Colors.orange,
-        title: const Text('Ordenes'),
-        centerTitle: true,
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: Colors.white,
-          tabs: [
-            Tab(text: 'Activas (${_ordenesActivas.length})'),
-            Tab(text: 'Completadas (${_ordenesCompletadas.length})'),
+    if (_productos.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.inbox, size: 64, color: Colors.grey.shade400),
+            const SizedBox(height: 12),
+            const Text(
+              'No hay productos en el catálogo',
+              style: TextStyle(color: Colors.grey, fontSize: 16),
+            ),
           ],
         ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _construirLista(_ordenesActivas, permiteEliminar: true),
-          _construirLista(_ordenesCompletadas, permiteEliminar: false),
-        ],
-      ),
-      // FloatingActionButton: acceso directo a crear una orden nueva
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.orange,
-        tooltip: 'Nueva orden',
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const NuevaOrdenScreen()),
-          );
-        },
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
+      );
+    }
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: MiStatusWidget(
+            estado: 'Activo',
+            detalles:
+                '${_productos.length} productos disponibles — '
+                '${_favoritos.length} marcados como favoritos',
+            progreso: _favoritos.length / _productos.length.clamp(1, 100),
+          ),
+        ),
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            itemCount: _productos.length,
+            itemBuilder: (context, index) {
+              final producto = _productos[index];
+              final esFav = _favoritos.contains(producto.id);
+
+              // Parte A: Dismissible con dos direcciones
+              return Dismissible(
+                key: ValueKey(producto.id),
+                confirmDismiss: (direction) async {
+                  if (direction == DismissDirection.startToEnd) {
+                    _editarProducto(producto);
+                    return false;
+                  } else {
+                    _confirmarEliminacion(producto);
+                    return false;
+                  }
+                },
+
+                background: Container(
+                  alignment: Alignment.centerLeft,
+                  padding: const EdgeInsets.only(left: 20),
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade600,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.edit, color: Colors.white, size: 28),
+                      SizedBox(width: 8),
+                      Text(
+                        'Editar',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                secondaryBackground: Container(
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.only(right: 20),
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade600,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        'Eliminar',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Icon(Icons.delete, color: Colors.white, size: 28),
+                    ],
+                  ),
+                ),
+
+                child: GestureDetector(
+                  onLongPress: () => _confirmarEliminacion(producto),
+                  child: ProductCard(
+                    nombre: producto.nombre,
+                    categoria: producto.categoria,
+                    precio: producto.precio,
+                    icono: producto.icono,
+                    esFavorito: esFav,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => DetalleScreen(producto: producto),
+                        ),
+                      );
+                    },
+                    onFavorite: () => _toggleFavorito(producto.id),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }

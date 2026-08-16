@@ -1,40 +1,5 @@
 import 'package:flutter/material.dart';
-
 import 'home_screen.dart';
-
-enum UserRole { cajera, cocinera }
-
-class Usuario {
-  final String username;
-  final String password;
-  final UserRole role;
-  final String nombreCompleto;
-
-  const Usuario({
-    required this.username,
-    required this.password,
-    required this.role,
-    required this.nombreCompleto,
-  });
-}
-
-// Usuarios "hardcoded" solo para la primera versión.
-// Cuando decidan backend (Firebase u otro), esta lista se reemplaza
-// por una llamada real de autenticación.
-const List<Usuario> _usuariosDemo = [
-  Usuario(
-    username: 'cajera1',
-    password: '1234',
-    role: UserRole.cajera,
-    nombreCompleto: 'María Pérez',
-  ),
-  Usuario(
-    username: 'cocinera1',
-    password: '1234',
-    role: UserRole.cocinera,
-    nombreCompleto: 'Ana López',
-  ),
-];
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -45,62 +10,41 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _usernameController = TextEditingController();
+  final _nombreController = TextEditingController();
+  final _correoController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  bool _obscurePassword = true;
-  bool _cargando = false;
+  bool _esRegistro = false;
+  bool _ocultarPassword = true;
 
   @override
   void dispose() {
-    _usernameController.dispose();
+    _nombreController.dispose();
+    _correoController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
-  Usuario? _validarLogin(String username, String password) {
-    for (final usuario in _usuariosDemo) {
-      if (usuario.username == username && usuario.password == password) {
-        return usuario;
-      }
-    }
-    return null;
-  }
-
-  Future<void> _handleLogin() async {
+  void _enviar() {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _cargando = true);
+    final nombre = _esRegistro
+        ? _nombreController.text.trim()
+        : 'Yerson Alvarenga';
 
-    // Simula una pequeña espera, útil si luego conectan un backend real.
-    await Future.delayed(const Duration(milliseconds: 400));
-
-    final usuario = _validarLogin(
-      _usernameController.text.trim(),
-      _passwordController.text,
-    );
-
-    if (!mounted) return;
-    setState(() => _cargando = false);
-
-    if (usuario == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Usuario o contraseña incorrectos'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-
-    // HomeScreen es compartida; cambia lo que muestra según el rol.
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (_) => HomeScreen(
-          role: usuario.role,
-          nombreUsuario: usuario.nombreCompleto,
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          _esRegistro
+              ? 'Cuenta creada, ¡bienvenido/a $nombre!'
+              : 'Sesión iniciada correctamente',
         ),
       ),
+    );
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => HomeScreen(nombreUsuario: nombre)),
     );
   }
 
@@ -110,83 +54,118 @@ class _LoginScreenState extends State<LoginScreen> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
+            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
             child: Form(
               key: _formKey,
               child: Column(
-                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Icon(Icons.local_gas_station, size: 72),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Order Tracker',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.headlineSmall,
+                  const SizedBox(height: 24),
+                  CircleAvatar(
+                    radius: 44,
+                    backgroundColor: Theme.of(
+                      context,
+                    ).colorScheme.primaryContainer,
+                    child: Icon(
+                      Icons.print,
+                      size: 44,
+                      color: Theme.of(context).colorScheme.onPrimaryContainer,
+                    ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Texaco Satuye',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium,
+                  const SizedBox(height: 12),
+                  const Center(
+                    child: Text(
+                      'Impresos Bethel',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const Center(
+                    child: Text(
+                      'Crecemos gracias a su preferencia',
+                      style: TextStyle(color: Colors.grey),
+                    ),
                   ),
                   const SizedBox(height: 32),
+
+                  if (_esRegistro) ...[
+                    TextFormField(
+                      controller: _nombreController,
+                      decoration: const InputDecoration(
+                        labelText: 'Nombre completo',
+                        prefixIcon: Icon(Icons.person_outline),
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (value) => (value == null || value.isEmpty)
+                          ? 'Ingresa tu nombre'
+                          : null,
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
                   TextFormField(
-                    controller: _usernameController,
+                    controller: _correoController,
+                    keyboardType: TextInputType.emailAddress,
                     decoration: const InputDecoration(
-                      labelText: 'Usuario',
-                      prefixIcon: Icon(Icons.person_outline),
+                      labelText: 'Correo electrónico',
+                      prefixIcon: Icon(Icons.email_outlined),
                       border: OutlineInputBorder(),
                     ),
                     validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Ingresa tu usuario';
+                      if (value == null || value.isEmpty) {
+                        return 'Ingresa tu correo';
                       }
+                      if (!value.contains('@')) return 'Correo inválido';
                       return null;
                     },
                   ),
                   const SizedBox(height: 16),
+
                   TextFormField(
                     controller: _passwordController,
-                    obscureText: _obscurePassword,
+                    obscureText: _ocultarPassword,
                     decoration: InputDecoration(
                       labelText: 'Contraseña',
                       prefixIcon: const Icon(Icons.lock_outline),
                       border: const OutlineInputBorder(),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_off
-                              : Icons.visibility,
+                          _ocultarPassword
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
                         ),
-                        onPressed: () {
-                          setState(() => _obscurePassword = !_obscurePassword);
-                        },
+                        onPressed: () => setState(
+                          () => _ocultarPassword = !_ocultarPassword,
+                        ),
                       ),
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Ingresa tu contraseña';
-                      }
-                      return null;
-                    },
+                    validator: (value) => (value == null || value.length < 4)
+                        ? 'Mínimo 4 caracteres'
+                        : null,
                   ),
                   const SizedBox(height: 24),
-                  FilledButton(
-                    onPressed: _cargando ? null : _handleLogin,
-                    child: _cargando
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Text('Ingresar'),
+
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    onPressed: _enviar,
+                    child: Text(
+                      _esRegistro ? 'Crear cuenta' : 'Iniciar sesión',
+                      style: const TextStyle(fontSize: 16),
+                    ),
                   ),
                   const SizedBox(height: 12),
-                  Text(
-                    'Demo: cajera1 / cocinera1  —  contraseña: 1234',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodySmall,
+
+                  TextButton(
+                    onPressed: () => setState(() => _esRegistro = !_esRegistro),
+                    child: Text(
+                      _esRegistro
+                          ? '¿Ya tienes cuenta? Inicia sesión'
+                          : '¿No tienes cuenta? Regístrate',
+                    ),
                   ),
                 ],
               ),
@@ -197,4 +176,3 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
-
