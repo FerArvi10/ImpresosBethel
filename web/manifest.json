@@ -1,6 +1,6 @@
 {
-    "name": "impresos_bethel",
-    "short_name": "impresos_bethel",
+    "name": "order_tracker",
+    "short_name": "order_tracker",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
