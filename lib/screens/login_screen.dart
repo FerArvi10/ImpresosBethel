@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
 
+/// Pantalla de autenticación y registro de Impresos Bethel.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -37,19 +37,26 @@ class _LoginScreenState extends State<LoginScreen> {
         content: Text(
           _esRegistro
               ? 'Cuenta creada, ¡bienvenido/a $nombre!'
-              : 'Sesión iniciada correctamente',
+              : '¡Bienvenido de nuevo, $nombre!',
         ),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
       ),
     );
 
-    Navigator.pushReplacement(
+    // Navegación con ruta nombrada y limpieza total de la pila (Decisión técnica obligatoria)
+    Navigator.pushNamedAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (_) => HomeScreen(nombreUsuario: nombre)),
+      '/home',
+      (route) => false,
+      arguments: nombre,
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -60,35 +67,49 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const SizedBox(height: 24),
-                  CircleAvatar(
-                    radius: 44,
-                    backgroundColor: Theme.of(
-                      context,
-                    ).colorScheme.primaryContainer,
-                    child: Icon(
-                      Icons.print,
-                      size: 44,
-                      color: Theme.of(context).colorScheme.onPrimaryContainer,
+                  const SizedBox(height: 16),
+                  Center(
+                    child: Container(
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: Colors.teal.shade50,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.teal.shade200, width: 2),
+                      ),
+                      child: const Icon(
+                        Icons.print,
+                        size: 48,
+                        color: Colors.teal,
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
                   const Center(
                     child: Text(
                       'Impresos Bethel',
                       style: TextStyle(
-                        fontSize: 24,
+                        fontSize: 26,
                         fontWeight: FontWeight.bold,
+                        color: Colors.teal,
                       ),
                     ),
                   ),
-                  const Center(
+                  Center(
                     child: Text(
                       'Crecemos gracias a su preferencia',
-                      style: TextStyle(color: Colors.grey),
+                      style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
                     ),
                   ),
                   const SizedBox(height: 32),
+
+                  Text(
+                    _esRegistro ? 'Crear Cuenta' : 'Iniciar Sesión',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
 
                   if (_esRegistro) ...[
                     TextFormField(
@@ -98,7 +119,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         prefixIcon: Icon(Icons.person_outline),
                         border: OutlineInputBorder(),
                       ),
-                      validator: (value) => (value == null || value.isEmpty)
+                      validator: (value) => (value == null || value.trim().isEmpty)
                           ? 'Ingresa tu nombre'
                           : null,
                     ),
@@ -110,11 +131,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     keyboardType: TextInputType.emailAddress,
                     decoration: const InputDecoration(
                       labelText: 'Correo electrónico',
+                      hintText: 'ejemplo@bethel.hn',
                       prefixIcon: Icon(Icons.email_outlined),
                       border: OutlineInputBorder(),
                     ),
                     validator: (value) {
-                      if (value == null || value.isEmpty) {
+                      if (value == null || value.trim().isEmpty) {
                         return 'Ingresa tu correo';
                       }
                       if (!value.contains('@')) return 'Correo inválido';
@@ -149,22 +171,28 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.teal,
+                      foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                     onPressed: _enviar,
                     child: Text(
-                      _esRegistro ? 'Crear cuenta' : 'Iniciar sesión',
-                      style: const TextStyle(fontSize: 16),
+                      _esRegistro ? 'Registrarse' : 'Ingresar',
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
 
                   TextButton(
                     onPressed: () => setState(() => _esRegistro = !_esRegistro),
                     child: Text(
                       _esRegistro
                           ? '¿Ya tienes cuenta? Inicia sesión'
-                          : '¿No tienes cuenta? Regístrate',
+                          : '¿No tienes cuenta? Regístrate aquí',
+                      style: TextStyle(color: theme.colorScheme.primary),
                     ),
                   ),
                 ],

@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
-import 'login_screen.dart';
-import 'listado_screen.dart';
-import 'perfil_screen.dart';
-import 'acerca_de_screen.dart';
 import '../models/producto.dart';
+import '../models/pedido.dart';
+import '../models/carrito_item.dart';
 import '../widgets/mi_status_widget.dart';
 import '../widgets/mi_item_card.dart';
+import 'catalogo_screen.dart';
+import 'historial_screen.dart';
+import 'perfil_screen.dart';
 
+/// Pantalla Principal / Dashboard de Impresos Bethel con Drawer, Tabs y Rutas con Nombre.
 class HomeScreen extends StatefulWidget {
-  final String nombreUsuario;
+  final String? nombreUsuario;
 
-  const HomeScreen({super.key, required this.nombreUsuario});
+  const HomeScreen({super.key, this.nombreUsuario});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -18,8 +20,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
-  final List<Map<String, dynamic>> _pedidos = [];
-
   final _formKeySheet = GlobalKey<FormState>();
   final _clienteController = TextEditingController();
   final _descripcionController = TextEditingController();
@@ -32,7 +32,6 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  // Parte A: FAB.extended abre BottomSheet con formulario de 3 campos
   void _mostrarFormularioBottomSheet() {
     _clienteController.clear();
     _descripcionController.clear();
@@ -62,7 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
-                      'Nuevo Pedido',
+                      'Nuevo Pedido Rápido',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -81,7 +80,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 TextFormField(
                   controller: _clienteController,
                   decoration: const InputDecoration(
-                    labelText: 'Nombre del Cliente',
+                    labelText: 'Nombre del Cliente / Empresa',
                     prefixIcon: Icon(Icons.person),
                     border: OutlineInputBorder(),
                   ),
@@ -94,7 +93,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 12),
 
-                // Campo 2: Tipo de trabajo (Dropdown)
+                // Campo 2: Tipo de trabajo
                 DropdownButtonFormField<String>(
                   initialValue: _tipoTrabajo,
                   decoration: const InputDecoration(
@@ -103,16 +102,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     border: OutlineInputBorder(),
                   ),
                   items: const [
-                    DropdownMenuItem(
-                        value: 'Talonarios', child: Text('Talonarios')),
-                    DropdownMenuItem(
-                        value: 'Camisetas', child: Text('Camisetas')),
-                    DropdownMenuItem(
-                        value: 'Estampados', child: Text('Estampados')),
-                    DropdownMenuItem(
-                        value: 'Bordados', child: Text('Bordados')),
-                    DropdownMenuItem(
-                        value: 'Stickers', child: Text('Stickers')),
+                    DropdownMenuItem(value: 'Talonarios', child: Text('Talonarios')),
+                    DropdownMenuItem(value: 'Camisetas', child: Text('Camisetas')),
+                    DropdownMenuItem(value: 'Estampados', child: Text('Estampados')),
+                    DropdownMenuItem(value: 'Bordados', child: Text('Bordados')),
+                    DropdownMenuItem(value: 'Stickers', child: Text('Stickers')),
+                    DropdownMenuItem(value: 'Sellos', child: Text('Sellos')),
                   ],
                   onChanged: (val) {
                     if (val != null) {
@@ -127,13 +122,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   controller: _descripcionController,
                   maxLines: 2,
                   decoration: const InputDecoration(
-                    labelText: 'Descripción del trabajo',
+                    labelText: 'Especificaciones del trabajo',
                     prefixIcon: Icon(Icons.description),
                     border: OutlineInputBorder(),
                   ),
                   validator: (val) {
                     if (val == null || val.trim().isEmpty) {
-                      return 'Ingrese una descripción';
+                      return 'Ingrese una descripción o requerimiento';
                     }
                     return null;
                   },
@@ -143,7 +138,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    // Botón Cancelar cierra el BottomSheet
                     OutlinedButton(
                       onPressed: () => Navigator.pop(ctx),
                       child: const Text('Cancelar'),
@@ -160,32 +154,30 @@ class _HomeScreenState extends State<HomeScreen> {
                           final trabajo = _tipoTrabajo;
                           final descripcion = _descripcionController.text.trim();
 
-                          setState(() {
-                            _pedidos.insert(0, {
-                              'cliente': nombreCliente,
-                              'tipo': trabajo,
-                              'descripcion': descripcion,
-                              'precio': 120.00,
-                              'estado': 'En proceso',
-                            });
-                          });
+                          historialPedidosDemo.insert(
+                            0,
+                            Pedido(
+                              codigo: 'BET-${1049 + historialPedidosDemo.length}',
+                              cliente: nombreCliente,
+                              fecha: 'Hoy',
+                              tipoTrabajo: trabajo,
+                              descripcion: descripcion,
+                              total: 180.00,
+                              estado: EstadoPedido.pendiente,
+                              cantidad: 1,
+                              icono: Icons.print,
+                            ),
+                          );
 
                           Navigator.pop(ctx);
 
-                          // Parte B.3: SnackBar flotante con 5s de duración
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(
-                                'Pedido para $nombreCliente registrado',
-                              ),
-                              duration: const Duration(seconds: 5),
+                              content: Text('Pedido para $nombreCliente registrado'),
+                              duration: const Duration(seconds: 4),
                               behavior: SnackBarBehavior.floating,
-                              margin: const EdgeInsets.all(12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
                               action: SnackBarAction(
-                                label: 'VER',
+                                label: 'VER HISTORIAL',
                                 textColor: Colors.amber,
                                 onPressed: () {
                                   setState(() => _currentIndex = 2);
@@ -196,7 +188,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         }
                       },
                       icon: const Icon(Icons.save),
-                      label: const Text('Guardar'),
+                      label: const Text('Guardar Pedido'),
                     ),
                   ],
                 ),
@@ -208,20 +200,19 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Tab Inicio: dashboard con MiItemCard y MiStatusWidget
-  Widget _construirTabInicio() {
+  Widget _construirTabInicio(String usuarioActual) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Banner de bienvenida
+          // Banner de bienvenida corporativo Bethel
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [Colors.teal.shade700, Colors.teal.shade400],
+                colors: [Colors.teal.shade800, Colors.teal.shade500],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -239,12 +230,12 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 const Row(
                   children: [
-                    Icon(Icons.print, color: Colors.white, size: 36),
+                    Icon(Icons.print, color: Colors.white, size: 34),
                     SizedBox(width: 10),
                     Text(
                       'Impresos Bethel',
                       style: TextStyle(
-                        fontSize: 24,
+                        fontSize: 22,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
@@ -253,7 +244,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Bienvenid@, ${widget.nombreUsuario}',
+                  'Bienvenid@, $usuarioActual',
                   style: const TextStyle(fontSize: 16, color: Colors.white),
                 ),
                 Text(
@@ -268,172 +259,192 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 20),
 
-          const Text('Estado de la Tienda',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          // KPIs y accesos directos
+          const Text(
+            'Métricas Rápidas',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 10),
 
-          // Uso de MiStatusWidget en tab Inicio
+          Row(
+            children: [
+              Expanded(
+                child: _kpiCard(
+                  'En Catálogo',
+                  '${catalogoDemo.length} productos',
+                  Icons.grid_view,
+                  Colors.teal,
+                  () => setState(() => _currentIndex = 1),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _kpiCard(
+                  'Historial',
+                  '${historialPedidosDemo.length} órdenes',
+                  Icons.history,
+                  Colors.blue,
+                  () => setState(() => _currentIndex = 2),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Widget personalizado de estado (Semana 3)
           MiStatusWidget(
             estado: 'Activo',
-            detalles: '${catalogoDemo.length} productos en catálogo',
-            progreso: 0.85,
+            detalles: '${catalogoDemo.length} productos listos para cotizar y personalizar',
+            progreso: 0.90,
           ),
-
           const SizedBox(height: 20),
-          const Text('Producto Destacado',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 10),
 
-          // Uso de MiItemCard en tab Inicio
+          // Producto Destacado con MiItemCard
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Producto Destacado',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              TextButton(
+                onPressed: () => setState(() => _currentIndex = 1),
+                child: const Text('Ver Todo'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+
           MiItemCard(
             titulo: catalogoDemo[0].nombre,
             subtitulo: catalogoDemo[0].descripcion,
             valor: catalogoDemo[0].precio,
-            estado: 'Activo',
+            estado: 'Disponible',
             colorAccento: Colors.teal,
             mostrarBadge: catalogoDemo[0].esPersonalizable,
-            onTap: () => setState(() => _currentIndex = 1),
-            onAccionSecundaria: () => setState(() => _currentIndex = 1),
+            onTap: () {
+              Navigator.pushNamed(context, '/detalle', arguments: catalogoDemo[0]);
+            },
+            onAccionSecundaria: () {
+              Navigator.pushNamed(context, '/detalle', arguments: catalogoDemo[0]);
+            },
+          ),
+          const SizedBox(height: 10),
+
+          MiItemCard(
+            titulo: catalogoDemo[1].nombre,
+            subtitulo: catalogoDemo[1].descripcion,
+            valor: catalogoDemo[1].precio,
+            estado: 'Personalizable',
+            colorAccento: Colors.teal.shade700,
+            mostrarBadge: catalogoDemo[1].esPersonalizable,
+            onTap: () {
+              Navigator.pushNamed(context, '/detalle', arguments: catalogoDemo[1]);
+            },
+            onAccionSecundaria: () {
+              Navigator.pushNamed(context, '/detalle', arguments: catalogoDemo[1]);
+            },
           ),
         ],
       ),
     );
   }
 
-  // Tab Pedidos: lista interactiva de pedidos registrados
-  Widget _construirTabPedidos() {
-    if (_pedidos.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.shopping_bag_outlined,
-                size: 64, color: Colors.grey.shade400),
-            const SizedBox(height: 12),
-            Text('Aún no tienes pedidos registrados',
-                style: TextStyle(fontSize: 16, color: Colors.grey.shade600)),
-            const SizedBox(height: 8),
-            Text('Usa el botón "Nuevo Pedido" para crear uno',
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+  Widget _kpiCard(String titulo, String subtitulo, IconData icono, Color color, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade200),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha((0.04 * 255).round()),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
           ],
         ),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      itemCount: _pedidos.length,
-      itemBuilder: (context, index) {
-        final pedido = _pedidos[index];
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 8.0),
-          child: MiItemCard(
-            titulo: '${pedido['tipo']} — ${pedido['cliente']}',
-            subtitulo: pedido['descripcion'] as String,
-            valor: pedido['precio'] as double,
-            estado: pedido['estado'] as String,
-            colorAccento: Colors.teal,
-            mostrarBadge: true,
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Pedido de ${pedido['cliente']} seleccionado'),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            },
-            onAccionSecundaria: () {
-              showDialog(
-                context: context,
-                builder: (dialogCtx) => AlertDialog(
-                  title: Row(
-                    children: [
-                      const Icon(Icons.receipt, color: Colors.teal),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Pedido: ${pedido['tipo']}',
-                          style: const TextStyle(fontSize: 18),
-                        ),
-                      ),
-                    ],
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withAlpha((0.15 * 255).round()),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icono, color: color, size: 24),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(titulo, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                  Text(
+                    subtitulo,
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  content: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('• Cliente: ${pedido['cliente']}',
-                          style: const TextStyle(fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 4),
-                      Text('• Estado: ${pedido['estado']}'),
-                      const SizedBox(height: 4),
-                      Text('• Total: L ${(pedido['precio'] as double).toStringAsFixed(2)}'),
-                      const SizedBox(height: 8),
-                      Text('• Descripción:\n${pedido['descripcion']}'),
-                    ],
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(dialogCtx),
-                      child: const Text('Cerrar'),
-                    ),
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        foregroundColor: Colors.white,
-                      ),
-                      icon: const Icon(Icons.delete, size: 16),
-                      label: const Text('Eliminar'),
-                      onPressed: () {
-                        Navigator.pop(dialogCtx);
-                        setState(() {
-                          _pedidos.removeAt(index);
-                        });
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Pedido eliminado correctamente'),
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        );
-      },
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    // Parte B.1: 4 secciones del BottomNavigationBar
+    // 5.1 Obtener argumentos de navegación
+    final usuarioActual = widget.nombreUsuario ??
+        (ModalRoute.of(context)?.settings.arguments as String?) ??
+        'Yerson Alvarenga';
+
     final List<Widget> pantallas = [
-      _construirTabInicio(),
-      const ListadoScreen(),
-      _construirTabPedidos(),
-      PerfilScreen(nombreUsuario: widget.nombreUsuario),
+      _construirTabInicio(usuarioActual),
+      const CatalogoScreen(mostrarAppBar: false),
+      const HistorialScreen(mostrarAppBar: false),
+      PerfilScreen(nombreUsuario: usuarioActual, mostrarAppBar: false),
+    ];
+
+    final titulos = [
+      'Impresos Bethel',
+      'Catálogo Completo',
+      'Historial de Pedidos',
+      'Mi Perfil',
     ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F2F2),
+      backgroundColor: const Color(0xFFF6F8F8),
       appBar: AppBar(
-        title: const Text('Impresos Bethel'),
+        title: Text(titulos[_currentIndex]),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Badge(
+              label: Text('${carritoDemo.length}'),
+              child: const Icon(Icons.shopping_cart_outlined),
+            ),
+            tooltip: 'Carrito de Pedidos',
+            onPressed: () => Navigator.pushNamed(context, '/carrito'),
+          ),
+        ],
       ),
 
-      // Parte B.2: Drawer con DrawerHeader personalizado (NO UserAccountsDrawerHeader)
+      // Drawer personalizado con Container + LinearGradient (Semana 3)
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            // DrawerHeader personalizado con Container + LinearGradient
             DrawerHeader(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Colors.teal.shade900, Colors.teal.shade500],
+                  colors: [Colors.teal.shade900, Colors.teal.shade600],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -445,12 +456,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   const CircleAvatar(
                     radius: 28,
                     backgroundColor: Colors.white,
-                    child:
-                        Icon(Icons.print, size: 32, color: Colors.teal),
+                    child: Icon(Icons.print, size: 32, color: Colors.teal),
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    widget.nombreUsuario,
+                    usuarioActual,
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 18,
@@ -458,10 +468,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   Text(
-                    'Impresos Bethel',
+                    'OrderTracker • Impresos Bethel',
                     style: TextStyle(
-                      color:
-                          Colors.white.withAlpha((0.85 * 255).round()),
+                      color: Colors.white.withAlpha((0.85 * 255).round()),
                       fontSize: 12,
                     ),
                   ),
@@ -469,10 +478,10 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            // Mínimo 5 opciones con ListTile
             ListTile(
               leading: const Icon(Icons.home_outlined),
               title: const Text('Inicio'),
+              selected: _currentIndex == 0,
               onTap: () {
                 Navigator.pop(context);
                 setState(() => _currentIndex = 0);
@@ -480,59 +489,34 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.grid_view),
-              title: const Text('Catálogo Completo'),
+              title: const Text('Catálogo de Productos'),
+              selected: _currentIndex == 1,
               onTap: () {
                 Navigator.pop(context);
                 setState(() => _currentIndex = 1);
               },
             ),
             ListTile(
-              leading: const Icon(Icons.shopping_bag_outlined),
-              title: const Text('Mis Pedidos'),
+              leading: const Icon(Icons.history),
+              title: const Text('Historial de Pedidos'),
+              selected: _currentIndex == 2,
               onTap: () {
                 Navigator.pop(context);
                 setState(() => _currentIndex = 2);
               },
             ),
-
-            // ExpansionTile con 3 sub-opciones
-            ExpansionTile(
-              leading: const Icon(Icons.category_outlined),
-              title: const Text('Categorías'),
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.receipt_long, size: 20),
-                  title: const Text('Talonarios'),
-                  contentPadding: const EdgeInsets.only(left: 32),
-                  onTap: () {
-                    Navigator.pop(context);
-                    setState(() => _currentIndex = 1);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.checkroom, size: 20),
-                  title: const Text('Camisetas'),
-                  contentPadding: const EdgeInsets.only(left: 32),
-                  onTap: () {
-                    Navigator.pop(context);
-                    setState(() => _currentIndex = 1);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.brush, size: 20),
-                  title: const Text('Estampados'),
-                  contentPadding: const EdgeInsets.only(left: 32),
-                  onTap: () {
-                    Navigator.pop(context);
-                    setState(() => _currentIndex = 1);
-                  },
-                ),
-              ],
+            ListTile(
+              leading: const Icon(Icons.shopping_cart_outlined),
+              title: const Text('Carrito de Compras'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/carrito');
+              },
             ),
-
             ListTile(
               leading: const Icon(Icons.person_outline),
               title: const Text('Mi Perfil'),
+              selected: _currentIndex == 3,
               onTap: () {
                 Navigator.pop(context);
                 setState(() => _currentIndex = 3);
@@ -543,31 +527,22 @@ class _HomeScreenState extends State<HomeScreen> {
               title: const Text('Acerca de'),
               onTap: () {
                 Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const AcercaDeScreen(),
-                  ),
-                );
+                Navigator.pushNamed(context, '/acerca-de');
               },
             ),
             const Divider(),
 
-            // Cerrar sesión con ícono Icons.logout y color rojo
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
               title: const Text(
                 'Cerrar sesión',
-                style: TextStyle(
-                  color: Colors.red,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
               ),
               onTap: () {
                 Navigator.pop(context);
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(
-                      builder: (_) => const LoginScreen()),
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  '/login',
                   (route) => false,
                 );
               },
@@ -576,10 +551,8 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
 
-      // Parte B.1: IndexedStack mantiene el estado de cada sección
       body: IndexedStack(index: _currentIndex, children: pantallas),
 
-      // Parte A: FloatingActionButton.extended con ícono Y texto
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: Colors.teal,
         onPressed: _mostrarFormularioBottomSheet,
@@ -590,21 +563,16 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
 
-      // Parte B.1: BottomNavigationBar con 4 secciones
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         selectedItemColor: Colors.teal,
         unselectedItemColor: Colors.grey,
         type: BottomNavigationBarType.fixed,
-        onTap: (index) {
-          setState(() => _currentIndex = index);
-        },
+        onTap: (index) => setState(() => _currentIndex = index),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.grid_view), label: 'Catálogo'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.shopping_bag), label: 'Pedidos'),
+          BottomNavigationBarItem(icon: Icon(Icons.grid_view), label: 'Catálogo'),
+          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'Historial'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Perfil'),
         ],
       ),
