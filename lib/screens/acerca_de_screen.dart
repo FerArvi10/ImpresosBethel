@@ -6,8 +6,9 @@ class AcercaDeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final esOscuro = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F8F8),
       appBar: AppBar(
         title: const Text('Acerca de'),
         centerTitle: true,
@@ -22,7 +23,9 @@ class AcercaDeScreen extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.teal.shade50,
+                  color: esOscuro
+                      ? Colors.teal.withAlpha((0.2 * 255).round())
+                      : Colors.teal.shade50,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.print, size: 54, color: Colors.teal),

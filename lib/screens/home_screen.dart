@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../main.dart';
 import '../models/producto.dart';
 import '../models/pedido.dart';
 import '../models/carrito_item.dart';
@@ -357,9 +358,9 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardTheme.color ?? Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade200),
+          border: Border.all(color: Colors.grey.withAlpha((0.2 * 255).round())),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withAlpha((0.04 * 255).round()),
@@ -420,11 +421,24 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F8F8),
       appBar: AppBar(
         title: Text(titulos[_currentIndex]),
         centerTitle: true,
         actions: [
+          ValueListenableBuilder<ThemeMode>(
+            valueListenable: themeNotifier,
+            builder: (context, mode, _) {
+              final esOscuro = mode == ThemeMode.dark;
+              return IconButton(
+                icon: Icon(
+                  esOscuro ? Icons.light_mode : Icons.dark_mode_outlined,
+                  color: esOscuro ? Colors.amber : Colors.teal,
+                ),
+                tooltip: esOscuro ? 'Cambiar a Modo Claro' : 'Cambiar a Modo Oscuro',
+                onPressed: alternarModoOscuro,
+              );
+            },
+          ),
           IconButton(
             icon: Badge(
               label: Text('${carritoDemo.length}'),
@@ -523,11 +537,38 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             ),
             ListTile(
+              leading: const Icon(Icons.store_mall_directory_outlined, color: Colors.teal),
+              title: const Text('Proveedores (API)'),
+              subtitle: const Text('Directorio y precios en línea', style: TextStyle(fontSize: 11)),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/proveedores');
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.info_outline),
               title: const Text('Acerca de'),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.pushNamed(context, '/acerca-de');
+              },
+            ),
+            ValueListenableBuilder<ThemeMode>(
+              valueListenable: themeNotifier,
+              builder: (context, mode, _) {
+                final esOscuro = mode == ThemeMode.dark;
+                return SwitchListTile(
+                  secondary: Icon(
+                    esOscuro ? Icons.dark_mode : Icons.light_mode,
+                    color: esOscuro ? Colors.tealAccent : Colors.teal,
+                  ),
+                  title: const Text('Modo Oscuro'),
+                  value: esOscuro,
+                  activeTrackColor: Colors.teal,
+                  onChanged: (val) {
+                    themeNotifier.value = val ? ThemeMode.dark : ThemeMode.light;
+                  },
+                );
               },
             ),
             const Divider(),

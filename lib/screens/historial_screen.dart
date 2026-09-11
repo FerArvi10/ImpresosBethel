@@ -63,15 +63,15 @@ class _HistorialScreenState extends State<HistorialScreen> {
               ],
             ),
             const Divider(height: 24),
-            _infoFila(Icons.person_outline, 'Cliente', pedido.cliente),
+            _infoFila(context, Icons.person_outline, 'Cliente', pedido.cliente),
             const SizedBox(height: 8),
-            _infoFila(Icons.calendar_today_outlined, 'Fecha de registro', pedido.fecha),
+            _infoFila(context, Icons.calendar_today_outlined, 'Fecha de registro', pedido.fecha),
             const SizedBox(height: 8),
-            _infoFila(Icons.print_outlined, 'Tipo de trabajo', pedido.tipoTrabajo),
+            _infoFila(context, Icons.print_outlined, 'Tipo de trabajo', pedido.tipoTrabajo),
             const SizedBox(height: 8),
-            _infoFila(Icons.format_list_numbered, 'Cantidad', '${pedido.cantidad} unidades'),
+            _infoFila(context, Icons.format_list_numbered, 'Cantidad', '${pedido.cantidad} unidades'),
             const SizedBox(height: 8),
-            _infoFila(Icons.payments_outlined, 'Total facturado', 'L ${pedido.total.toStringAsFixed(2)}'),
+            _infoFila(context, Icons.payments_outlined, 'Total facturado', 'L ${pedido.total.toStringAsFixed(2)}'),
             const SizedBox(height: 12),
             const Text(
               'Descripción técnica:',
@@ -80,7 +80,13 @@ class _HistorialScreenState extends State<HistorialScreen> {
             const SizedBox(height: 4),
             Text(
               pedido.descripcion,
-              style: TextStyle(color: Colors.grey.shade700, fontSize: 13, height: 1.3),
+              style: TextStyle(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.grey.shade300
+                    : Colors.grey.shade700,
+                fontSize: 13,
+                height: 1.3,
+              ),
             ),
             const SizedBox(height: 24),
             SizedBox(
@@ -100,7 +106,8 @@ class _HistorialScreenState extends State<HistorialScreen> {
     );
   }
 
-  Widget _infoFila(IconData icono, String etiqueta, String valor) {
+  Widget _infoFila(BuildContext context, IconData icono, String etiqueta, String valor) {
+    final esOscuro = Theme.of(context).brightness == Brightness.dark;
     return Row(
       children: [
         Icon(icono, size: 18, color: Colors.teal),
@@ -112,7 +119,10 @@ class _HistorialScreenState extends State<HistorialScreen> {
         Expanded(
           child: Text(
             valor,
-            style: TextStyle(color: Colors.grey.shade800, fontSize: 13),
+            style: TextStyle(
+              color: esOscuro ? Colors.grey.shade300 : Colors.grey.shade800,
+              fontSize: 13,
+            ),
             overflow: TextOverflow.ellipsis,
           ),
         ),
@@ -122,12 +132,13 @@ class _HistorialScreenState extends State<HistorialScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final esOscuro = Theme.of(context).brightness == Brightness.dark;
     final contenido = Column(
       children: [
         // Selector de filtro rápido por estado
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          color: Colors.white,
+          color: Theme.of(context).cardTheme.color ?? Theme.of(context).cardColor,
           child: Row(
             children: [
               const Icon(Icons.filter_list, size: 20, color: Colors.teal),
@@ -170,7 +181,10 @@ class _HistorialScreenState extends State<HistorialScreen> {
                       const SizedBox(height: 12),
                       Text(
                         'No hay pedidos con estado "$_filtroEstado"',
-                        style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                        style: TextStyle(
+                          color: esOscuro ? Colors.grey.shade400 : Colors.grey.shade600,
+                          fontSize: 14,
+                        ),
                       ),
                     ],
                   ),
@@ -193,7 +207,9 @@ class _HistorialScreenState extends State<HistorialScreen> {
                           width: 46,
                           height: 46,
                           decoration: BoxDecoration(
-                            color: Colors.teal.shade50,
+                            color: esOscuro
+                                ? Colors.teal.withAlpha((0.2 * 255).round())
+                                : Colors.teal.shade50,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Icon(pedido.icono, color: Colors.teal, size: 24),
@@ -269,7 +285,6 @@ class _HistorialScreenState extends State<HistorialScreen> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F8F8),
       appBar: AppBar(
         title: const Text('Historial de Pedidos'),
         centerTitle: true,

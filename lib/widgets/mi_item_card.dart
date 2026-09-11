@@ -30,6 +30,8 @@ class MiItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final esOscuro = Theme.of(context).brightness == Brightness.dark;
+
     return Card(
       elevation: 4.0,
       shape: RoundedRectangleBorder(
@@ -57,7 +59,7 @@ class MiItemCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 18.0,
                         fontWeight: FontWeight.bold,
-                        color: colorAccento,
+                        color: esOscuro ? Colors.tealAccent : colorAccento,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -68,9 +70,13 @@ class MiItemCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8.0, vertical: 4.0),
                       decoration: BoxDecoration(
-                        color: Colors.orange.shade100,
+                        color: esOscuro
+                            ? Colors.orange.withAlpha((0.2 * 255).round())
+                            : Colors.orange.shade100,
                         borderRadius: BorderRadius.circular(12.0),
-                        border: Border.all(color: Colors.orange.shade400),
+                        border: Border.all(
+                          color: esOscuro ? Colors.orange : Colors.orange.shade400,
+                        ),
                       ),
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
@@ -93,7 +99,10 @@ class MiItemCard extends StatelessWidget {
               const SizedBox(height: 6.0),
               Text(
                 subtitulo,
-                style: TextStyle(fontSize: 14.0, color: Colors.grey.shade700),
+                style: TextStyle(
+                  fontSize: 14.0,
+                  color: esOscuro ? Colors.grey.shade400 : Colors.grey.shade700,
+                ),
               ),
               const SizedBox(height: 12.0),
               Row(

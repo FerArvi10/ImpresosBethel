@@ -53,6 +53,8 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final esOscuro = Theme.of(context).brightness == Brightness.dark;
+
     // 5.3 Responsive básico: calcula el número de columnas según el ancho de pantalla
     final screenWidth = MediaQuery.of(context).size.width;
     final int crossAxisCount = screenWidth > 900
@@ -85,14 +87,14 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
                   : null,
               contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
               filled: true,
-              fillColor: Colors.white,
+              fillColor: Theme.of(context).cardTheme.color ?? Theme.of(context).cardColor,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.shade300),
+                borderSide: BorderSide(color: Colors.grey.withAlpha((0.3 * 255).round())),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.shade300),
+                borderSide: BorderSide(color: Colors.grey.withAlpha((0.3 * 255).round())),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -118,13 +120,17 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
                 avatar: Icon(
                   cat.icono,
                   size: 16,
-                  color: isSelected ? Colors.white : Colors.teal.shade700,
+                  color: isSelected
+                      ? Colors.white
+                      : (esOscuro ? Colors.tealAccent : Colors.teal.shade700),
                 ),
                 label: Text(cat.nombre),
                 selected: isSelected,
                 selectedColor: Colors.teal,
                 labelStyle: TextStyle(
-                  color: isSelected ? Colors.white : Colors.grey.shade800,
+                  color: isSelected
+                      ? Colors.white
+                      : (esOscuro ? Colors.grey.shade300 : Colors.grey.shade800),
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                   fontSize: 12,
                 ),
@@ -148,7 +154,7 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
                 '${_productosFiltrados.length} productos encontrados',
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.grey.shade600,
+                  color: esOscuro ? Colors.grey.shade400 : Colors.grey.shade600,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -232,7 +238,6 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F8F8),
       appBar: AppBar(
         title: const Text('Catálogo de Productos'),
         centerTitle: true,

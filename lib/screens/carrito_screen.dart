@@ -91,7 +91,6 @@ class _CarritoScreenState extends State<CarritoScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F8F8),
       appBar: AppBar(
         title: const Text('Carrito de Pedidos'),
         centerTitle: true,
@@ -297,11 +296,11 @@ class _CarritoScreenState extends State<CarritoScreen> {
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).cardTheme.color ?? Theme.of(context).cardColor,
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withAlpha((0.08 * 255).round()),
+                        color: Colors.black.withAlpha((0.15 * 255).round()),
                         blurRadius: 10,
                         offset: const Offset(0, -3),
                       ),

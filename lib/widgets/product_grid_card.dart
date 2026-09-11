@@ -19,6 +19,7 @@ class ProductGridCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final esOscuro = theme.brightness == Brightness.dark;
 
     return Card(
       elevation: 3,
@@ -47,10 +48,9 @@ class ProductGridCard extends StatelessWidget {
                       height: 68,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [
-                            Colors.teal.shade100,
-                            Colors.teal.shade50,
-                          ],
+                          colors: esOscuro
+                              ? [Colors.teal.shade900, const Color(0xFF00382E)]
+                              : [Colors.teal.shade100, Colors.teal.shade50],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
@@ -59,7 +59,7 @@ class ProductGridCard extends StatelessWidget {
                       child: Icon(
                         producto.icono,
                         size: 34,
-                        color: Colors.teal.shade800,
+                        color: esOscuro ? Colors.tealAccent : Colors.teal.shade800,
                       ),
                     ),
                   ),
@@ -84,7 +84,7 @@ class ProductGridCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
+                  color: esOscuro ? Colors.white10 : Colors.grey.shade100,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -92,7 +92,7 @@ class ProductGridCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
-                    color: Colors.grey.shade700,
+                    color: esOscuro ? Colors.grey.shade300 : Colors.grey.shade700,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -130,9 +130,13 @@ class ProductGridCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        color: Colors.orange.shade50,
+                        color: esOscuro
+                            ? Colors.orange.withAlpha((0.2 * 255).round())
+                            : Colors.orange.shade50,
                         borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: Colors.orange.shade300),
+                        border: Border.all(
+                          color: esOscuro ? Colors.orange : Colors.orange.shade300,
+                        ),
                       ),
                       child: const Icon(
                         Icons.brush,

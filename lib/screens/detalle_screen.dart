@@ -34,7 +34,6 @@ class _DetalleScreenState extends State<DetalleScreen> {
     final totalCalculado = producto.precio * _cantidad;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9F9),
       appBar: AppBar(
         title: Text(producto.nombre),
         centerTitle: true,
@@ -209,9 +208,9 @@ class _DetalleScreenState extends State<DetalleScreen> {
                 ),
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).cardTheme.color ?? Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.grey.shade300),
+                    border: Border.all(color: Colors.grey.withAlpha((0.3 * 255).round())),
                   ),
                   child: Row(
                     children: [
@@ -241,13 +240,13 @@ class _DetalleScreenState extends State<DetalleScreen> {
               TextField(
                 controller: _notasController,
                 maxLines: 2,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Notas de Personalización',
                   hintText: 'Ej. Nombre o logo a imprimir, tallas o numeración...',
-                  prefixIcon: Icon(Icons.edit_note),
-                  border: OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.edit_note),
+                  border: const OutlineInputBorder(),
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: Theme.of(context).cardTheme.color ?? Theme.of(context).cardColor,
                 ),
               ),
               const SizedBox(height: 20),

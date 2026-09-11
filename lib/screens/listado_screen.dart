@@ -150,7 +150,6 @@ class _ListadoScreenState extends State<ListadoScreen> {
               final producto = _productos[index];
               final esFav = _favoritos.contains(producto.id);
 
-              // Parte A: Dismissible con dos direcciones
               return Dismissible(
                 key: ValueKey(producto.id),
                 confirmDismiss: (direction) async {

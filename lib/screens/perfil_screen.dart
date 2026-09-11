@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../main.dart';
 
 /// Pantalla de Perfil y Configuración (Layout obligatorio 3: Card + ListTile, mínimo 5 opciones).
 class PerfilScreen extends StatefulWidget {
@@ -18,7 +19,6 @@ class PerfilScreen extends StatefulWidget {
 class _PerfilScreenState extends State<PerfilScreen> {
   bool _notificacionesPush = true;
   bool _alertasWhatsApp = true;
-  bool _modoOscuro = false;
 
   void _cerrarSesion() {
     showDialog(
@@ -60,6 +60,8 @@ class _PerfilScreenState extends State<PerfilScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final esOscuro = Theme.of(context).brightness == Brightness.dark;
+
     final contenido = SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -77,8 +79,12 @@ class _PerfilScreenState extends State<PerfilScreen> {
                 children: [
                   CircleAvatar(
                     radius: 32,
-                    backgroundColor: Colors.teal.shade100,
-                    child: Icon(Icons.person, size: 36, color: Colors.teal.shade800),
+                    backgroundColor: esOscuro ? Colors.teal.shade900 : Colors.teal.shade100,
+                    child: Icon(
+                      Icons.person,
+                      size: 36,
+                      color: esOscuro ? Colors.tealAccent : Colors.teal.shade800,
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -95,22 +101,29 @@ class _PerfilScreenState extends State<PerfilScreen> {
                         const SizedBox(height: 2),
                         Text(
                           'cliente@bethel.hn',
-                          style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: esOscuro ? Colors.grey.shade400 : Colors.grey.shade600,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: Colors.teal.shade50,
+                            color: esOscuro
+                                ? Colors.teal.withAlpha((0.2 * 255).round())
+                                : Colors.teal.shade50,
                             borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: Colors.teal.shade200),
+                            border: Border.all(
+                              color: esOscuro ? Colors.tealAccent : Colors.teal.shade200,
+                            ),
                           ),
-                          child: const Text(
+                          child: Text(
                             'Cliente Preferencial',
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
-                              color: Colors.teal,
+                              color: esOscuro ? Colors.tealAccent : Colors.teal,
                             ),
                           ),
                         ),
@@ -118,7 +131,10 @@ class _PerfilScreenState extends State<PerfilScreen> {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.edit_outlined, color: Colors.teal),
+                    icon: Icon(
+                      Icons.edit_outlined,
+                      color: esOscuro ? Colors.tealAccent : Colors.teal,
+                    ),
                     tooltip: 'Editar Perfil',
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -136,11 +152,15 @@ class _PerfilScreenState extends State<PerfilScreen> {
           const SizedBox(height: 20),
 
           // SECCIÓN 1: AJUSTES DE CUENTA
-          const Padding(
-            padding: EdgeInsets.only(left: 4, bottom: 8),
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 8),
             child: Text(
               'Ajustes de Cuenta',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.teal),
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: esOscuro ? Colors.tealAccent : Colors.teal,
+              ),
             ),
           ),
 
@@ -155,10 +175,15 @@ class _PerfilScreenState extends State<PerfilScreen> {
                   leading: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.teal.shade50,
+                      color: esOscuro
+                          ? Colors.teal.withAlpha((0.2 * 255).round())
+                          : Colors.teal.shade50,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.receipt_long, color: Colors.teal),
+                    child: Icon(
+                      Icons.receipt_long,
+                      color: esOscuro ? Colors.tealAccent : Colors.teal,
+                    ),
                   ),
                   title: const Text('Datos de Facturación'),
                   subtitle: const Text('RTN y razón social para facturas SAR'),
@@ -179,10 +204,15 @@ class _PerfilScreenState extends State<PerfilScreen> {
                   leading: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.teal.shade50,
+                      color: esOscuro
+                          ? Colors.teal.withAlpha((0.2 * 255).round())
+                          : Colors.teal.shade50,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.location_on_outlined, color: Colors.teal),
+                    child: Icon(
+                      Icons.location_on_outlined,
+                      color: esOscuro ? Colors.tealAccent : Colors.teal,
+                    ),
                   ),
                   title: const Text('Dirección de Envío'),
                   subtitle: const Text('Tegucigalpa, Francisco Morazán'),
@@ -196,10 +226,15 @@ class _PerfilScreenState extends State<PerfilScreen> {
                   leading: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.teal.shade50,
+                      color: esOscuro
+                          ? Colors.teal.withAlpha((0.2 * 255).round())
+                          : Colors.teal.shade50,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.lock_outline, color: Colors.teal),
+                    child: Icon(
+                      Icons.lock_outline,
+                      color: esOscuro ? Colors.tealAccent : Colors.teal,
+                    ),
                   ),
                   title: const Text('Seguridad y Contraseña'),
                   subtitle: const Text('Actualizar credenciales de acceso'),
@@ -212,11 +247,15 @@ class _PerfilScreenState extends State<PerfilScreen> {
           const SizedBox(height: 20),
 
           // SECCIÓN 2: PREFERENCIAS Y NOTIFICACIONES
-          const Padding(
-            padding: EdgeInsets.only(left: 4, bottom: 8),
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 8),
             child: Text(
               'Preferencias y Alertas',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.teal),
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: esOscuro ? Colors.tealAccent : Colors.teal,
+              ),
             ),
           ),
 
@@ -231,10 +270,15 @@ class _PerfilScreenState extends State<PerfilScreen> {
                   secondary: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.teal.shade50,
+                      color: esOscuro
+                          ? Colors.teal.withAlpha((0.2 * 255).round())
+                          : Colors.teal.shade50,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.notifications_active_outlined, color: Colors.teal),
+                    child: Icon(
+                      Icons.notifications_active_outlined,
+                      color: esOscuro ? Colors.tealAccent : Colors.teal,
+                    ),
                   ),
                   title: const Text('Notificaciones de Pedido'),
                   subtitle: const Text('Avisar cuando un trabajo esté listo'),
@@ -249,7 +293,9 @@ class _PerfilScreenState extends State<PerfilScreen> {
                   secondary: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.green.shade50,
+                      color: esOscuro
+                          ? Colors.green.withAlpha((0.2 * 255).round())
+                          : Colors.green.shade50,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(Icons.chat_outlined, color: Colors.green),
@@ -262,21 +308,36 @@ class _PerfilScreenState extends State<PerfilScreen> {
                 ),
                 const Divider(height: 1, indent: 64),
 
-                // ListTile 6: Modo Oscuro
-                SwitchListTile(
-                  secondary: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.purple.shade50,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(Icons.dark_mode_outlined, color: Colors.purple),
-                  ),
-                  title: const Text('Modo Oscuro'),
-                  subtitle: const Text('Tema visual para poca luz'),
-                  value: _modoOscuro,
-                  activeTrackColor: Colors.teal,
-                  onChanged: (val) => setState(() => _modoOscuro = val),
+                // ListTile 6: Modo Oscuro (Reactivo con ValueListenableBuilder)
+                ValueListenableBuilder<ThemeMode>(
+                  valueListenable: themeNotifier,
+                  builder: (context, currentMode, _) {
+                    final isDark = currentMode == ThemeMode.dark;
+                    return SwitchListTile(
+                      secondary: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.purple.withAlpha((0.25 * 255).round())
+                              : Colors.purple.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          isDark ? Icons.dark_mode : Icons.dark_mode_outlined,
+                          color: isDark ? Colors.purpleAccent : Colors.purple,
+                        ),
+                      ),
+                      title: const Text('Modo Oscuro'),
+                      subtitle: Text(
+                        isDark ? 'Tema oscuro activado' : 'Tema visual para poca luz',
+                      ),
+                      value: isDark,
+                      activeTrackColor: Colors.teal,
+                      onChanged: (val) {
+                        themeNotifier.value = val ? ThemeMode.dark : ThemeMode.light;
+                      },
+                    );
+                  },
                 ),
               ],
             ),
@@ -284,11 +345,15 @@ class _PerfilScreenState extends State<PerfilScreen> {
           const SizedBox(height: 20),
 
           // SECCIÓN 3: INFORMACIÓN Y ACCIONES
-          const Padding(
-            padding: EdgeInsets.only(left: 4, bottom: 8),
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 8),
             child: Text(
               'Soporte e Información',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.teal),
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: esOscuro ? Colors.tealAccent : Colors.teal,
+              ),
             ),
           ),
 
@@ -303,10 +368,15 @@ class _PerfilScreenState extends State<PerfilScreen> {
                   leading: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.teal.shade50,
+                      color: esOscuro
+                          ? Colors.teal.withAlpha((0.2 * 255).round())
+                          : Colors.teal.shade50,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.info_outline, color: Colors.teal),
+                    child: Icon(
+                      Icons.info_outline,
+                      color: esOscuro ? Colors.tealAccent : Colors.teal,
+                    ),
                   ),
                   title: const Text('Acerca de Impresos Bethel'),
                   subtitle: const Text('Versión 1.4.0 • Equipo de desarrollo'),
@@ -320,7 +390,9 @@ class _PerfilScreenState extends State<PerfilScreen> {
                   leading: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.red.shade50,
+                      color: esOscuro
+                          ? Colors.red.withAlpha((0.2 * 255).round())
+                          : Colors.red.shade50,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(Icons.logout, color: Colors.red),
@@ -346,7 +418,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F8F8),
       appBar: AppBar(
         title: const Text('Mi Perfil y Ajustes'),
         centerTitle: true,
