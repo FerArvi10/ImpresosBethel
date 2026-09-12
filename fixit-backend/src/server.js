@@ -12,6 +12,9 @@ async function iniciarServidor() {
 
     // Sincronizar esquemas de base de datos
     await sequelize.sync();
+    // Asegurar columna apellido en SQLite si no existiera
+    await sequelize.query('ALTER TABLE usuarios ADD COLUMN apellido VARCHAR(120);').catch(() => {});
+
     console.log('✅ Modelos sincronizados correctamente con la base de datos.');
 
     app.listen(PORT, '0.0.0.0', () => {
@@ -20,6 +23,7 @@ async function iniciarServidor() {
       console.log(`🌐 Local:            http://localhost:${PORT}`);
       console.log(`📱 Emulador Android: http://10.0.2.2:${PORT}`);
       console.log(`🔗 API Base URL:     http://localhost:${PORT}/api`);
+      console.log(`👥 Usuarios GET URL: http://localhost:${PORT}/api/auth/users`);
       console.log(`📦 Proveedores URL:  http://localhost:${PORT}/api/proveedores`);
       console.log('====================================================');
     });

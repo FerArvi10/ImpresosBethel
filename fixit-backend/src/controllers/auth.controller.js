@@ -6,6 +6,7 @@ const generarToken = (usuario) => {
     {
       id: usuario.id,
       nombre: usuario.nombre,
+      apellido: usuario.apellido || '',
       email: usuario.email,
       rol: usuario.rol,
     },
@@ -20,7 +21,7 @@ const generarToken = (usuario) => {
  */
 const registro = async (req, res, next) => {
   try {
-    const { nombre, email, password, rol } = req.body;
+    const { nombre, apellido, email, password, rol } = req.body;
 
     if (!nombre || !email || !password) {
       return res.status(400).json({
@@ -29,7 +30,10 @@ const registro = async (req, res, next) => {
       });
     }
 
-    const usuarioExiste = await User.findOne({ where: { email: email.toLowerCase() } });
+    const emailLimpio = String(email).trim().toLowerCase();
+
+    // Verificación de correo duplicado
+    const usuarioExiste = await User.findOne({ where: { email: emailLimpio } });
     if (usuarioExiste) {
       return res.status(400).json({
         success: false,
@@ -37,10 +41,12 @@ const registro = async (req, res, next) => {
       });
     }
 
+    // Creación del nuevo usuario (la contraseña se hashea con bcrypt en el hook beforeCreate)
     const nuevoUsuario = await User.create({
-      nombre,
-      email: email.toLowerCase(),
-      password,
+      nombre: String(nombre).trim(),
+      apellido: apellido ? String(apellido).trim() : '',
+      email: emailLimpio,
+      password: String(password),
       rol: rol || 'cliente',
     });
 
@@ -53,6 +59,7 @@ const registro = async (req, res, next) => {
       usuario: {
         id: nuevoUsuario.id,
         nombre: nuevoUsuario.nombre,
+        apellido: nuevoUsuario.apellido,
         email: nuevoUsuario.email,
         rol: nuevoUsuario.rol,
       },
@@ -77,7 +84,8 @@ const login = async (req, res, next) => {
       });
     }
 
-    const usuario = await User.findOne({ where: { email: email.toLowerCase() } });
+    const emailLimpio = String(email).trim().toLowerCase();
+    const usuario = await User.findOne({ where: { email: emailLimpio } });
     if (!usuario) {
       return res.status(401).json({
         success: false,
@@ -102,6 +110,7 @@ const login = async (req, res, next) => {
       usuario: {
         id: usuario.id,
         nombre: usuario.nombre,
+        apellido: usuario.apellido,
         email: usuario.email,
         rol: usuario.rol,
       },
@@ -118,7 +127,7 @@ const login = async (req, res, next) => {
 const perfil = async (req, res, next) => {
   try {
     const usuario = await User.findByPk(req.usuario.id, {
-      attributes: ['id', 'nombre', 'email', 'rol', 'createdAt'],
+      attributes: ['id', 'nombre', 'apellido', 'email', 'rol', 'createdAt'],
     });
 
     if (!usuario) {
@@ -137,8 +146,31 @@ const perfil = async (req, res, next) => {
   }
 };
 
+/**
+ * Listado de usuarios registrados para comprobación de persistencia
+ * GET /api/auth/users
+ */
+const listarUsuarios = async (req, res, next) => {
+  try {
+    const usuarios = await User.findAll({
+      attributes: ['id', 'nombre', 'apellido', 'email', 'rol', 'password', 'createdAt'],
+      order: [['id', 'DESC']],
+    });
+
+    return res.status(200).json({
+      success: true,
+      total: usuarios.length,
+      mensaje: 'Persistencia en Base de Datos verificada correctamente',
+      usuarios,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   registro,
   login,
   perfil,
+  listarUsuarios,
 };

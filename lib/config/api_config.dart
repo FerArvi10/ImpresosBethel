@@ -47,6 +47,22 @@ class ApiConfig {
   /// Endpoint GET /api/categorias
   static String get categorias => '$baseUrl/categorias';
 
+  // =========================================================================
+  // ENDPOINTS DE AUTENTICACIÓN Y REGISTRO (Actividad 8.1)
+  // =========================================================================
+
+  /// Endpoint POST /api/auth/register
+  static String get authRegister => '$baseUrl/auth/register';
+
+  /// Endpoint POST /api/auth/login
+  static String get authLogin => '$baseUrl/auth/login';
+
+  /// Endpoint GET /api/auth/users (Persistencia)
+  static String get authUsers => '$baseUrl/auth/users';
+
+  /// Endpoint GET /api/health (Estado del Backend)
+  static String get health => '$baseUrl/health';
+
   /// Timeout estándar para peticiones en red (10 segundos)
   static const Duration timeout = Duration(seconds: 10);
 
