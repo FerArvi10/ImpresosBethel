@@ -12,14 +12,8 @@ class ApiConfig {
   // =========================================================================
 
   static String get _dominio {
-    // Si pruebas con celular físico en la misma red Wi-Fi, descomenta esto:
-    // return 'http://192.168.1.50:3000';
-
-    if (kIsWeb) return 'http://localhost:3000';
-    try {
-      if (Platform.isAndroid) return 'http://10.0.2.2:3000';
-    } catch (_) {}
-    return 'http://localhost:3000';
+    // Backend desplegado en Railway (Producción en la Nube):
+    return 'https://fixit-backend-production-57b4.up.railway.app';
   }
 
   // Prefijo de la API
