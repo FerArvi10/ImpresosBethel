@@ -1,31 +1,18 @@
-import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 /// Configuración centralizada de la API y dominio para OrderTracker.
 class ApiConfig {
   // =========================================================================
-  // DOMINIO Y PUERTO DEL SERVIDOR (Auto-detectable)
-  // =========================================================================
-  // - Si estás en Windows / Chrome / Web: usa http://localhost:3000
-  // - Si estás en Emulador Android: usa http://10.0.2.2:3000
-  // - Si usas celular físico: descomenta la línea con tu IP local (ipconfig).
+  // DOMINIO Y PUERTO DEL SERVIDOR (Servidor desplegado en Railway)
   // =========================================================================
 
-  static String get _dominio {
-    // Si pruebas con celular físico en la misma red Wi-Fi, descomenta esto:
-    // return 'http://192.168.1.50:3000';
-
-    if (kIsWeb) return 'http://localhost:3000';
-    try {
-      if (Platform.isAndroid) return 'http://10.0.2.2:3000';
-    } catch (_) {}
-    return 'http://localhost:3000';
-  }
+  static String get _dominio =>
+      'https://fixit-backend-production-57b4.up.railway.app';
 
   // Prefijo de la API
   static const String _apiPrefix = '/api';
 
-  /// URL Base completa: ej. 'http://localhost:3000/api' o 'http://10.0.2.2:3000/api'
+  /// URL Base completa: 'https://fixit-backend-production-57b4.up.railway.app/api'
   static String get baseUrl => '$_dominio$_apiPrefix';
 
   // =========================================================================
@@ -68,7 +55,7 @@ class ApiConfig {
 
   /// Headers estándar para peticiones JSON
   static Map<String, String> get headersJson => {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      };
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  };
 }
