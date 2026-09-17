@@ -150,13 +150,24 @@ class _LoginScreenState extends State<LoginScreen> {
           arguments: nombreUsuario,
         );
       } else {
-        _mostrarErrorDialog(resultado.message);
+        if (resultado.bloqueado) {
+          _mostrarErrorDialog(
+            resultado.message,
+            titulo: 'Acceso Bloqueado (5 Intentos)',
+            esBloqueo: true,
+          );
+        } else {
+          _mostrarErrorDialog(
+            resultado.message,
+            titulo: 'Error de Inicio de Sesión',
+          );
+        }
       }
     }
   }
 
-  /// Muestra diálogo modal con mensaje de error del backend (ej. correo duplicado)
-  void _mostrarErrorDialog(String mensaje) {
+  /// Muestra diálogo modal con mensaje de error del backend
+  void _mostrarErrorDialog(String mensaje, {String titulo = 'Atención', bool esBloqueo = false}) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -166,35 +177,36 @@ class _LoginScreenState extends State<LoginScreen> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.red.shade50,
+                color: esBloqueo ? Colors.red.shade100 : Colors.orange.shade50,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.error_outline, color: Colors.red, size: 28),
+              child: Icon(
+                esBloqueo ? Icons.gpp_bad_outlined : Icons.warning_amber_rounded,
+                color: esBloqueo ? Colors.red.shade800 : Colors.orange.shade800,
+                size: 28,
+              ),
             ),
             const SizedBox(width: 12),
-            const Expanded(
+            Expanded(
               child: Text(
-                'No se pudo registrar',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                titulo,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
           ],
         ),
         content: Text(
           mensaje,
-          style: const TextStyle(fontSize: 15, color: Colors.black87),
+          style: const TextStyle(fontSize: 14, height: 1.4),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text(
-              'Aceptar',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
-                color: Colors.teal,
-              ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: esBloqueo ? Colors.red.shade700 : Colors.teal,
+              foregroundColor: Colors.white,
             ),
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Entendido'),
           ),
         ],
       ),

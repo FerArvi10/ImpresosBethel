@@ -4,25 +4,27 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
 
-/// Modelo de resultado para operaciones de autenticación
+
 class AuthResult {
   final bool success;
   final String message;
   final String? token;
   final Map<String, dynamic>? usuario;
+  final bool bloqueado;
+  final int? intentosRestantes;
 
   const AuthResult({
     required this.success,
     required this.message,
     this.token,
     this.usuario,
+    this.bloqueado = false,
+    this.intentosRestantes,
   });
 }
 
-/// Servicio encargado del consumo de la API REST para registro y autenticación
 class AuthService {
-  /// Registra un nuevo usuario en el backend de Impresos Bethel.
-  /// POST /api/auth/register
+  
   static Future<AuthResult> register({
     required String nombre,
     required String apellido,
@@ -121,11 +123,14 @@ class AuthService {
           message: data['message'] ?? 'Sesión iniciada con éxito',
           token: data['token'] as String?,
           usuario: data['usuario'] as Map<String, dynamic>?,
+          bloqueado: false,
         );
       } else {
         return AuthResult(
           success: false,
           message: data['message'] ?? 'Credenciales inválidas',
+          bloqueado: data['bloqueado'] == true,
+          intentosRestantes: data['intentosRestantes'] as int?,
         );
       }
     } on SocketException {

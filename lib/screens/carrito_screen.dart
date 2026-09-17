@@ -1,5 +1,10 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import '../config/api_config.dart';
 import '../models/carrito_item.dart';
+import '../models/pedido.dart';
+import 'factura_screen.dart';
 
 /// Pantalla de Carrito / Resumen de Pedido (Layout obligatorio 4: Column + Expanded + Footer fijo).
 class CarritoScreen extends StatefulWidget {
@@ -11,6 +16,7 @@ class CarritoScreen extends StatefulWidget {
 
 class _CarritoScreenState extends State<CarritoScreen> {
   final List<CarritoItem> _items = carritoDemo;
+  bool _enviando = false;
 
   double get _subtotal {
     return _items.fold(0.0, (acc, item) => acc + item.subtotal);
@@ -18,6 +24,86 @@ class _CarritoScreenState extends State<CarritoScreen> {
 
   double get _isv => _subtotal * 0.15;
   double get _total => _subtotal + _isv;
+
+  Future<void> _procesarOrdenBackend() async {
+    setState(() => _enviando = true);
+
+    final itemsCopia = List<CarritoItem>.from(_items);
+    final totalCalculado = _total;
+    final int cantidadTotal = _items.fold(0, (acc, i) => acc + i.cantidad);
+    final String descripcionTrabajos =
+        _items.map((i) => '${i.cantidad}x ${i.producto.nombre}').join(', ');
+    final String tipoTrabajo =
+        _items.isNotEmpty ? _items.first.producto.categoria : 'Impresión';
+
+    String codigoGenerado = 'BET-${1049 + historialPedidosDemo.length}';
+
+    try {
+      final response = await http
+          .post(
+            Uri.parse(ApiConfig.pedidos),
+            headers: ApiConfig.headersJson,
+            body: jsonEncode({
+              'cliente': 'Cliente Impresos Bethel',
+              'tipoTrabajo': tipoTrabajo,
+              'descripcion': descripcionTrabajos,
+              'total': totalCalculado,
+              'cantidad': cantidadTotal,
+              'estado': 'enProceso',
+              'items': itemsCopia
+                  .map((i) => {
+                        'nombre': i.producto.nombre,
+                        'cantidad': i.cantidad,
+                        'precio': i.producto.precio,
+                        'subtotal': i.subtotal,
+                        'personalizacion': i.personalizacion,
+                      })
+                  .toList(),
+            }),
+          )
+          .timeout(ApiConfig.timeout);
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        if (data['data'] != null && data['data']['codigo'] != null) {
+          codigoGenerado = data['data']['codigo'];
+        }
+      }
+    } catch (_) {
+      // Modo offline resiliente: se mantiene el código local
+    }
+
+    final nuevoPedido = Pedido(
+      codigo: codigoGenerado,
+      cliente: 'Cliente Impresos Bethel',
+      fecha: 'Hoy',
+      tipoTrabajo: tipoTrabajo,
+      descripcion: descripcionTrabajos,
+      total: totalCalculado,
+      estado: EstadoPedido.enProceso,
+      cantidad: cantidadTotal,
+      icono: Icons.print,
+    );
+
+    historialPedidosDemo.insert(0, nuevoPedido);
+
+    setState(() {
+      _items.clear();
+      _enviando = false;
+    });
+
+    if (mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (ctx) => FacturaScreen(
+            pedido: nuevoPedido,
+            items: itemsCopia,
+          ),
+        ),
+      );
+    }
+  }
 
   void _confirmarPedido() {
     if (_items.isEmpty) {
@@ -50,6 +136,11 @@ class _CarritoScreenState extends State<CarritoScreen> {
                 style: const TextStyle(fontWeight: FontWeight.w600)),
             Text('• Total a pagar: L ${_total.toStringAsFixed(2)}',
                 style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.teal)),
+            const SizedBox(height: 8),
+            const Text(
+              'Al confirmar, se guardará en la base de datos y se generará tu Factura Fiscal SAR.',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
           ],
         ),
         actions: [
@@ -57,31 +148,17 @@ class _CarritoScreenState extends State<CarritoScreen> {
             onPressed: () => Navigator.pop(dialogCtx),
             child: const Text('Cancelar'),
           ),
-          ElevatedButton(
+          ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.teal,
               foregroundColor: Colors.white,
             ),
+            icon: const Icon(Icons.receipt_long, size: 18),
+            label: const Text('Generar Factura'),
             onPressed: () {
               Navigator.pop(dialogCtx);
-              setState(() {
-                _items.clear();
-              });
-
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('¡Pedido registrado con éxito! Código: BET-1049'),
-                  behavior: SnackBarBehavior.floating,
-                  backgroundColor: Colors.teal.shade800,
-                  action: SnackBarAction(
-                    label: 'VER HISTORIAL',
-                    textColor: Colors.amber,
-                    onPressed: () => Navigator.pushNamed(context, '/historial'),
-                  ),
-                ),
-              );
+              _procesarOrdenBackend();
             },
-            child: const Text('Confirmar'),
           ),
         ],
       ),
@@ -357,12 +434,23 @@ class _CarritoScreenState extends State<CarritoScreen> {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            icon: const Icon(Icons.check_circle_outline),
-                            label: const Text(
-                              'Confirmar y Enviar Pedido',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            icon: _enviando
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Icon(Icons.receipt_long_outlined),
+                            label: Text(
+                              _enviando
+                                  ? 'Procesando en Servidor...'
+                                  : 'Confirmar y Facturar',
+                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                             ),
-                            onPressed: _confirmarPedido,
+                            onPressed: _enviando ? null : _confirmarPedido,
                           ),
                         ),
                       ],

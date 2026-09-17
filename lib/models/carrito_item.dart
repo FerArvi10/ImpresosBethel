@@ -13,6 +13,7 @@ class CarritoItem {
   });
 
   double get subtotal => producto.precio * cantidad;
+  String get personalizacion => notasPersonalizacion;
 }
 
 final List<CarritoItem> carritoDemo = [

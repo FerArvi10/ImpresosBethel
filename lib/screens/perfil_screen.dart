@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import '../config/api_config.dart';
 import '../main.dart';
 
 /// Pantalla de Perfil y Configuración (Layout obligatorio 3: Card + ListTile, mínimo 5 opciones).
@@ -54,6 +56,134 @@ class _PerfilScreenState extends State<PerfilScreen> {
             child: const Text('Salir'),
           ),
         ],
+      ),
+    );
+  }
+
+  void _mostrarConfiguracionServidor() {
+    final ipController = TextEditingController(text: ApiConfig.ipLocalWifi);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return AlertDialog(
+            title: const Row(
+              children: [
+                Icon(Icons.dns_outlined, color: Colors.teal),
+                SizedBox(width: 8),
+                Text('Conexión y Servidor', style: TextStyle(fontSize: 18)),
+              ],
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Selecciona cómo se conecta tu app móvil:',
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 12),
+                  RadioListTile<ModoConexion>(
+                    value: ModoConexion.nube,
+                    groupValue: ApiConfig.modoActual,
+                    title: const Text('Nube (Railway)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                    subtitle: const Text('Funciona en cualquier celular con Internet', style: TextStyle(fontSize: 11)),
+                    activeColor: Colors.teal,
+                    contentPadding: EdgeInsets.zero,
+                    onChanged: (val) {
+                      setModalState(() => ApiConfig.modoActual = val!);
+                      setState(() {});
+                    },
+                  ),
+                  RadioListTile<ModoConexion>(
+                    value: ModoConexion.wifiLocal,
+                    groupValue: ApiConfig.modoActual,
+                    title: const Text('Wi-Fi Local (PC)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                    subtitle: Text('IP PC: ${ApiConfig.ipLocalWifi}:3000 (Misma red)', style: const TextStyle(fontSize: 11)),
+                    activeColor: Colors.teal,
+                    contentPadding: EdgeInsets.zero,
+                    onChanged: (val) {
+                      setModalState(() => ApiConfig.modoActual = val!);
+                      setState(() {});
+                    },
+                  ),
+                  RadioListTile<ModoConexion>(
+                    value: ModoConexion.localhost,
+                    groupValue: ApiConfig.modoActual,
+                    title: const Text('USB / Localhost', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                    subtitle: const Text('localhost:3000 (con adb reverse)', style: TextStyle(fontSize: 11)),
+                    activeColor: Colors.teal,
+                    contentPadding: EdgeInsets.zero,
+                    onChanged: (val) {
+                      setModalState(() => ApiConfig.modoActual = val!);
+                      setState(() {});
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  const Text('Cambiar IP Local Wi-Fi si tu red es diferente:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: ipController,
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      labelText: 'Dirección IPv4 de la PC',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.wifi, size: 18),
+                    ),
+                    keyboardType: TextInputType.number,
+                    onChanged: (v) {
+                      ApiConfig.ipLocalWifi = v.trim();
+                      setState(() {});
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'URL Activa: ${ApiConfig.baseUrl}',
+                    style: const TextStyle(fontSize: 11, color: Colors.teal, fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton.icon(
+                icon: const Icon(Icons.speed, size: 16),
+                label: const Text('Probar Conexión'),
+                onPressed: () async {
+                  try {
+                    final res = await http.get(Uri.parse(ApiConfig.health)).timeout(const Duration(seconds: 4));
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Servidor OK (${res.statusCode}): En línea'),
+                          backgroundColor: Colors.teal,
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Error de conexión: $e'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  }
+                },
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.teal,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Listo'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -240,6 +370,32 @@ class _PerfilScreenState extends State<PerfilScreen> {
                   subtitle: const Text('Actualizar credenciales de acceso'),
                   trailing: const Icon(Icons.chevron_right, color: Colors.grey),
                   onTap: () {},
+                ),
+                const Divider(height: 1, indent: 64),
+
+                // ListTile 4: Conexión y Servidor Móvil
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: esOscuro
+                          ? Colors.teal.withAlpha((0.2 * 255).round())
+                          : Colors.teal.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.router_outlined,
+                      color: esOscuro ? Colors.tealAccent : Colors.teal,
+                    ),
+                  ),
+                  title: const Text('Conexión y Servidor (Celular)'),
+                  subtitle: Text(
+                    ApiConfig.modoActual == ModoConexion.nube
+                        ? 'Nube Railway (En línea)'
+                        : 'Local: ${ApiConfig.baseUrl}',
+                  ),
+                  trailing: const Icon(Icons.tune, color: Colors.teal),
+                  onTap: _mostrarConfiguracionServidor,
                 ),
               ],
             ),

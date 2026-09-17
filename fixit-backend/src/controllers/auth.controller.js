@@ -1,6 +1,12 @@
 const jwt = require('jsonwebtoken');
 const { User } = require('../models');
 
+// Registro en memoria de intentos fallidos por correo
+// Estructura: email -> { count: number, bloqueadoHasta: timestamp }
+const intentosFallidos = new Map();
+const MAX_INTENTOS = 5;
+const TIEMPO_BLOQUEO_MS = 15 * 60 * 1000; // 15 minutos
+
 const generarToken = (usuario) => {
   return jwt.sign(
     {
@@ -70,7 +76,7 @@ const registro = async (req, res, next) => {
 };
 
 /**
- * Iniciar sesión
+ * Iniciar sesión con límite de 5 intentos fallidos
  * POST /api/auth/login
  */
 const login = async (req, res, next) => {
@@ -85,21 +91,60 @@ const login = async (req, res, next) => {
     }
 
     const emailLimpio = String(email).trim().toLowerCase();
-    const usuario = await User.findOne({ where: { email: emailLimpio } });
-    if (!usuario) {
-      return res.status(401).json({
+
+    // 1. Verificar si el usuario está actualmente bloqueado por exceso de intentos
+    const estado = intentosFallidos.get(emailLimpio);
+    const ahora = Date.now();
+
+    if (estado && estado.bloqueadoHasta && ahora < estado.bloqueadoHasta) {
+      const minutosRestantes = Math.ceil((estado.bloqueadoHasta - ahora) / 60000);
+      return res.status(429).json({
         success: false,
-        message: 'Credenciales inválidas',
+        bloqueado: true,
+        intentosRestantes: 0,
+        message: `Has superado el límite de ${MAX_INTENTOS} intentos fallidos. Tu cuenta está bloqueada temporalmente por seguridad. Intenta nuevamente en ${minutosRestantes} minuto(s).`,
       });
     }
 
-    const esValido = await usuario.validarPassword(password);
+    // 2. Buscar usuario en base de datos y validar contraseña
+    const usuario = await User.findOne({ where: { email: emailLimpio } });
+    const esValido = usuario ? await usuario.validarPassword(password) : false;
+
     if (!esValido) {
-      return res.status(401).json({
-        success: false,
-        message: 'Credenciales inválidas',
-      });
+      // Registrar intento fallido
+      const nuevoConteo = (estado ? estado.count : 0) + 1;
+
+      if (nuevoConteo >= MAX_INTENTOS) {
+        // Bloquear cuenta por 15 minutos
+        intentosFallidos.set(emailLimpio, {
+          count: nuevoConteo,
+          bloqueadoHasta: ahora + TIEMPO_BLOQUEO_MS,
+        });
+
+        return res.status(429).json({
+          success: false,
+          bloqueado: true,
+          intentosRestantes: 0,
+          message: `Has alcanzado el límite máximo de ${MAX_INTENTOS} intentos fallidos. Por seguridad, el acceso ha sido bloqueado por 15 minutos.`,
+        });
+      } else {
+        const intentosRestantes = MAX_INTENTOS - nuevoConteo;
+        intentosFallidos.set(emailLimpio, {
+          count: nuevoConteo,
+          bloqueadoHasta: null,
+        });
+
+        return res.status(401).json({
+          success: false,
+          bloqueado: false,
+          intentosRestantes,
+          message: `Credenciales incorrectas. Te quedan ${intentosRestantes} de ${MAX_INTENTOS} intentos antes del bloqueo.`,
+        });
+      }
     }
+
+    // 3. Si las credenciales son válidas, limpiar historial de intentos fallidos
+    intentosFallidos.delete(emailLimpio);
 
     const token = generarToken(usuario);
 

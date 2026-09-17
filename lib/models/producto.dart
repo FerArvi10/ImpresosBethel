@@ -23,6 +23,99 @@ class Producto {
     this.tiempoEntrega = '2 a 3 días hábiles',
     this.stockDisponible = 25,
   });
+
+  /// Crea una instancia de Producto a partir de un JSON de la API REST / MySQL
+  factory Producto.fromJson(Map<String, dynamic> json) {
+    // Resolver ícono según la categoría o el campo iconoNombre
+    IconData resolverIcono(String? iconoNombre, String cat) {
+      if (iconoNombre != null) {
+        switch (iconoNombre.toLowerCase()) {
+          case 'receipt_long':
+            return Icons.receipt_long;
+          case 'checkroom':
+            return Icons.checkroom;
+          case 'dry_cleaning':
+            return Icons.dry_cleaning;
+          case 'brush':
+            return Icons.brush;
+          case 'auto_awesome':
+            return Icons.auto_awesome;
+          case 'local_offer':
+            return Icons.local_offer;
+          case 'approval':
+            return Icons.approval;
+          case 'menu_book':
+            return Icons.menu_book;
+          case 'edit':
+            return Icons.edit;
+          case 'coffee':
+            return Icons.coffee;
+          case 'view_carousel':
+            return Icons.view_carousel;
+        }
+      }
+
+      switch (cat.toLowerCase()) {
+        case 'talonarios':
+          return Icons.receipt_long;
+        case 'uniformes':
+        case 'camisetas':
+          return Icons.checkroom;
+        case 'estampados':
+          return Icons.brush;
+        case 'bordados':
+          return Icons.auto_awesome;
+        case 'stickers':
+          return Icons.local_offer;
+        case 'sellos':
+          return Icons.approval;
+        case 'gigantografia':
+          return Icons.view_carousel;
+        default:
+          return Icons.inventory_2_outlined;
+      }
+    }
+
+    final cat = json['categoria']?.toString() ?? 'General';
+
+    return Producto(
+      id: json['id'] is int
+          ? json['id'] as int
+          : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      nombre: json['nombre']?.toString() ?? 'Producto sin nombre',
+      categoria: cat,
+      precio: json['precio'] is num
+          ? (json['precio'] as num).toDouble()
+          : double.tryParse(json['precio']?.toString() ?? '0.0') ?? 0.0,
+      esPersonalizable: json['esPersonalizable'] == true ||
+          json['esPersonalizable'] == 1 ||
+          json['esPersonalizable'] == '1',
+      descripcion: json['descripcion']?.toString() ?? '',
+      icono: resolverIcono(json['iconoNombre']?.toString(), cat),
+      tiempoEntrega: json['tiempoEntrega']?.toString() ?? '2 a 3 días hábiles',
+      stockDisponible: json['stockDisponible'] is int
+          ? json['stockDisponible'] as int
+          : json['stock'] is int
+              ? json['stock'] as int
+              : int.tryParse(json['stockDisponible']?.toString() ??
+                      json['stock']?.toString() ??
+                      '20') ??
+                  20,
+    );
+  }
+
+  /// Serializa a JSON para enviar al backend (POST / PUT)
+  Map<String, dynamic> toJson() {
+    return {
+      'nombre': nombre,
+      'categoria': categoria,
+      'precio': precio,
+      'esPersonalizable': esPersonalizable,
+      'descripcion': descripcion,
+      'stockDisponible': stockDisponible,
+      'tiempoEntrega': tiempoEntrega,
+    };
+  }
 }
 
 /// Catálogo demo realista de Impresos Bethel: imprenta, serigrafía, bordados y librería.

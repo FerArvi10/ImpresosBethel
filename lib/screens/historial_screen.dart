@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/pedido.dart';
+import 'factura_screen.dart';
 
 /// Pantalla de Historial de Pedidos (Layout obligatorio 1: ListView.builder con separatorBuilder).
 class HistorialScreen extends StatefulWidget {
@@ -88,17 +89,37 @@ class _HistorialScreenState extends State<HistorialScreen> {
                 height: 1.3,
               ),
             ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.teal,
-                  foregroundColor: Colors.white,
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text('Cerrar'),
+                  ),
                 ),
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('Cerrar'),
-              ),
+                const SizedBox(width: 10),
+                Expanded(
+                  flex: 2,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.teal,
+                      foregroundColor: Colors.white,
+                    ),
+                    icon: const Icon(Icons.receipt_long, size: 18),
+                    label: const Text('Factura Fiscal'),
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => FacturaScreen(pedido: pedido),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
           ],
         ),
